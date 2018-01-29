@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,8 +36,8 @@ from __future__ import print_function
 import tensorflow as tf
 from utils import read_conf
 
-_BATCH_NORM_DECAY = float(read_conf.get_conf_param('cnn_param', 'resnet_batch_norm_decay'))
-_BATCH_NORM_EPSILON = float(read_conf.get_conf_param('cnn_param', 'resnet_batch_norm_epsilon'))
+_BATCH_NORM_DECAY = read_conf.get_conf_float_param('cnn_param', 'resnet_batch_norm_decay')
+_BATCH_NORM_EPSILON = read_conf.get_conf_float_param('cnn_param', 'resnet_batch_norm_epsilon')
 
 
 
@@ -47,7 +48,7 @@ def batch_norm_relu(inputs, is_training, data_format):
   inputs = tf.layers.batch_normalization(
       inputs=inputs, axis=1 if data_format == 'channels_first' else 3,
       momentum=_BATCH_NORM_DECAY, epsilon=_BATCH_NORM_EPSILON, center=True,
-      scale=True, training=is_training, fused=True)
+      scale=True, training=is_training)
   inputs = tf.nn.relu(inputs)
   return inputs
 
@@ -90,7 +91,7 @@ def conv2d_fixed_padding(inputs, filters, kernel_size, strides, data_format):
   return tf.layers.conv2d(
       inputs=inputs, filters=filters, kernel_size=kernel_size, strides=strides,
       padding=('SAME' if strides == 1 else 'VALID'), use_bias=False,
-      kernel_initializer=tf.variance_scaling_initializer(),
+      kernel_initializer=tf.contrib.layers.variance_scaling_initializer(),
       data_format=data_format)
 
 
@@ -221,7 +222,7 @@ def block_layer(inputs, filters, block_fn, blocks, strides, is_training, name,
 
 
 
-def imagenet_resnet_v2_generator(block_fn, layers, num_classes,
+def imagenet_resnet_v2_generator(block_fn, layers,
                                  data_format=None):
   """Generator for ImageNet ResNet v2 models.
 
@@ -276,7 +277,7 @@ def imagenet_resnet_v2_generator(block_fn, layers, num_classes,
         strides=2, is_training=is_training, name='block_layer4',
         data_format=data_format)
     feature_map = batch_norm_relu(inputs, is_training, data_format)
-    print(feature_map.shape)
+    print('=====resnet feature map shape is:', feature_map.shape)
     #到此处都是公共部分，从此往后开始产生分支
     return feature_map
 

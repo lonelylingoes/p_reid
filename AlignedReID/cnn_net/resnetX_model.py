@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +27,9 @@ from __future__ import print_function
 import tensorflow as tf
 from utils import read_conf
 
-_BATCH_NORM_DECAY = float(read_conf.get_conf_param('cnn_param', 'resnet_batch_norm_decay'))
-_BATCH_NORM_EPSILON = float(read_conf.get_conf_param('cnn_param', 'resnet_batch_norm_epsilon'))
-USE_FP16 = True if read_conf.get_conf_param('model_param', 'float_type')=='use_fp16' else False
+_BATCH_NORM_DECAY = read_conf.get_conf_float_param('cnn_param', 'resnet_batch_norm_decay')
+_BATCH_NORM_EPSILON = read_conf.get_conf_float_param('cnn_param', 'resnet_batch_norm_epsilon')
+USE_FP16 = True if read_conf.get_conf_str_param('model_param', 'float_type')=='use_fp16' else False
 
 
 def batch_norm_relu(inputs, is_training, data_format):
@@ -38,7 +39,7 @@ def batch_norm_relu(inputs, is_training, data_format):
   inputs = tf.layers.batch_normalization(
       inputs=inputs, axis=1 if data_format == 'channels_first' else 3,
       momentum=_BATCH_NORM_DECAY, epsilon=_BATCH_NORM_EPSILON, center=True,
-      scale=True, training=is_training, fused=True)
+      scale=True, training=is_training)
   inputs = tf.nn.relu(inputs)
   return inputs
 
@@ -81,7 +82,7 @@ def conv2d_fixed_padding(inputs, filters, kernel_size, strides, data_format):
   return tf.layers.conv2d(
       inputs=inputs, filters=filters, kernel_size=kernel_size, strides=strides,
       padding=('SAME' if strides == 1 else 'VALID'), use_bias=False,
-      kernel_initializer=tf.variance_scaling_initializer(),
+      kernel_initializer=tf.contrib.layers.variance_scaling_initializer(),
       data_format=data_format)
 
 
@@ -104,40 +105,48 @@ def _variable_on_cpu(name, shape, initializer, dtype):
 
 
 def depthwise_sepa_conv2d_fixed_padding(inputs, filters, kernel_size, strides, data_format):
-  '''
-  传统的卷积是一个卷积核在所有通道上进行卷积，如：
-    input=[20,20,3],kernel=[3,3,3]
-  depthwise separable convolution就是在输入的每个通道进行卷积,如：
-    input=[20,20,3],kernel=[3,3,1]分别在input的三个通道上进行卷积，然后再拼接起来。
-  所谓Xception cell就是，经过上面的depthwise separable convolution之后，再加一个1x1的卷积
-  '''
-  if strides > 1:
-    inputs = fixed_padding(inputs, kernel_size, data_format)
+    '''
+    传统的卷积是一个卷积核在所有通道上进行卷积，如：
+        input=[20,20,3],kernel=[3,3,3]
+    depthwise separable convolution就是在输入的每个通道进行卷积,如：
+        input=[20,20,3],kernel=[3,3,1]分别在input的三个通道上进行卷积，然后再拼接起来。
+    所谓Xception cell就是，经过上面的depthwise separable convolution之后，再加一个1x1的卷积
+    '''
+    if strides > 1:
+        inputs = fixed_padding(inputs, kernel_size, data_format)
 
-  if data_format == 'channels_first':
-    data_format = 'NCHW'
-    in_channels = inputs.get_shape()[1].value
-  else:
-    data_format = 'NHWC'
-    in_channels = inputs.get_shape()[3].value
-  #kernel的shape不需要改变，由data_format指定后，自动调整
-  dtype = tf.float16 if USE_FP16 else tf.float32
-  kernel = _variable_on_cpu(
-          name = None,
-          [kernel_size, kernel_size, in_channels, 1],
-          tf.truncated_normal_initializer(stddev=stddev, dtype=dtype),
-          dtype)
-  inputs = tf.nn.depthwise_conv2d(inputs = inputs, 
-                                  kernel = kernel, 
-                                  strides = strides, 
-                                  padding=('SAME' if strides == 1 else 'VALID'), 
-                                  data_format = data_format)
-  # 进行1x1的卷积
-  return tf.layers.conv2d(
-      inputs=inputs, filters=filters, kernel_size=1, strides=1,
-      padding='VALID', use_bias=False,
-      kernel_initializer=tf.variance_scaling_initializer(),
-      data_format=data_format)
+    #1.0版本的tf.nn.depthwise_conv2d不支持通道格式，所以将输入格式统一转成nhwc进行计算
+    if data_format == 'channels_first':
+        in_channels = inputs.get_shape()[1].value
+        inputs = tf.transpose(inputs, [0,2,3,1])
+    else:
+        in_channels = inputs.get_shape()[3].value
+    #kernel的shape不需要改变，由data_format指定后，自动调整
+    dtype = tf.float16 if USE_FP16 else tf.float32
+# =============================================================================
+#     kernel = _variable_on_cpu(
+#           'depthwise_kernel',
+#           [kernel_size, kernel_size, in_channels, 1],
+#           tf.truncated_normal_initializer(stddev=5e-2, dtype=dtype),
+#           dtype)
+# =============================================================================
+    kernel = tf.Variable(
+                tf.truncated_normal([kernel_size, kernel_size, in_channels, 1], stddev=5e-2, dtype=dtype),
+                name ='depthwise_kernel' )
+    _strides = [1, strides, strides, 1]
+    inputs = tf.nn.depthwise_conv2d(input = inputs, 
+                                  filter = kernel, 
+                                  strides = _strides, 
+                                  padding=('SAME' if strides == 1 else 'VALID'))
+    # 再转回nchw格式
+    if data_format == 'channels_first':
+        inputs = tf.transpose(inputs, [0,3,1,2])
+    # 进行1x1的卷积
+    return tf.layers.conv2d(
+            inputs=inputs, filters=filters, kernel_size=1, strides=1,
+            padding='VALID', use_bias=False,
+            kernel_initializer=tf.contrib.layers.variance_scaling_initializer(),
+            data_format=data_format)
 
 
 
@@ -323,7 +332,7 @@ def imagenet_resnetX_v2_generator(block_fn, layers, num_classes,
         strides=2, is_training=is_training, name='block_layer4',
         data_format=data_format)
     feature_map = batch_norm_relu(inputs, is_training, data_format)
-    print(feature_map.shape)
+    print('=====resnetX feature map shape is:', feature_map.shape)
     #到此处都是公共部分，从此往后开始产生分支
     return feature_map
 

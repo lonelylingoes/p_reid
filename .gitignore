@@ -8,3 +8,4 @@ __pycache__
 checkpoint
 *ckpt*
 events*
+data_set

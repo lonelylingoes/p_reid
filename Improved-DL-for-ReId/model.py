@@ -165,9 +165,9 @@ def inference(images):
         active1_2 = tf.nn.relu(pre_activation1_2, name=scope.name)
         _activation_summary(active1_2)
         
-    pool1_1 = tf.nn.max_pool(active1_1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
-                         padding='VALID', name='pool1_1')
-    pool1_2 = tf.nn.max_pool(active1_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+        pool1_1 = tf.nn.max_pool(active1_1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+                             padding='VALID', name='pool1_1')
+        pool1_2 = tf.nn.max_pool(active1_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                          padding='VALID', name='pool1_2')
     #-----L2
     with tf.variable_scope('Tied_ConvMax_Pooling2') as scope:
@@ -187,9 +187,9 @@ def inference(images):
         active2_2 = tf.nn.relu(pre_activation2_2, name=scope.name)
         _activation_summary(active2_2)
         
-    pool2_1 = tf.nn.max_pool(active2_1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
-                         padding='VALID', name='pool2_1')
-    pool2_2 = tf.nn.max_pool(active2_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+        pool2_1 = tf.nn.max_pool(active2_1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+                             padding='VALID', name='pool2_1')
+        pool2_2 = tf.nn.max_pool(active2_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                          padding='VALID', name='pool2_2')
     #------L3
     with tf.variable_scope('Cross_Input_Neighborhood_Differences') as scope:
@@ -237,10 +237,10 @@ def inference(images):
         pre_activation5_2 = tf.nn.bias_add(conv5_2, biases2)
         active5_2 = tf.nn.relu(pre_activation5_2, name=scope.name)
         _activation_summary(active4_2)
-    pool5_1 = tf.nn.max_pool(active5_1, ksize=[1, 3, 4, 1], strides=[1, 2, 2, 1],
-                         padding='VALID', name='pool5_1')
-    pool5_2 = tf.nn.max_pool(active5_2, ksize=[1, 3, 4, 1], strides=[1, 2, 2, 1],
-                         padding='VALID', name='pool5_2')
+        pool5_1 = tf.nn.max_pool(active5_1, ksize=[1, 3, 4, 1], strides=[1, 2, 2, 1],
+                             padding='VALID', name='pool5_1')
+        pool5_2 = tf.nn.max_pool(active5_2, ksize=[1, 3, 4, 1], strides=[1, 2, 2, 1],
+                             padding='VALID', name='pool5_2')
     #------L6，全连接层
     with tf.variable_scope('Higher_Order_Relationships') as scope:
         M = tf.concat([pool5_1, pool5_2], 3)#合并两个图片,master版本中参数顺序颠倒了
