@@ -1,200 +1,157 @@
 #-*- coding:utf-8 -*-
-#====================
-#market1501数据集预处理程序
-#====================
+#===================================
+#market1501 data set prepare program
+#===================================
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
 import sys
 sys.path.append('../')
-import os
-import random
-import cv2 as cv
+
+from zipfile import ZipFile
+import os.path as osp
 import numpy as np
 
-from utils import read_conf
+from utils.utils import may_make_dir
+from utils.utils import save_pickle
 
 
-IMAGE_WITH = read_conf.get_conf_int_param('cnn_param', 'input_with')
-IMAGE_HEIGHT = read_conf.get_conf_int_param('cnn_param', 'input_height')
+from utils.dataset_utils import get_im_names
+from utils.dataset_utils import partition_train_val_set
+from utils.dataset_utils import parse_original_im_name
+from utils.dataset_utils import parse_full_path_im_name
 
 
+def get_images_split(zip_file, save_dir=None):
+    """
+    Rename and move all used images to a directory.
+    """
+
+    print("Extracting zip file")
+    root = osp.dirname(osp.abspath(zip_file))
+    if save_dir is None:
+        save_dir = root
+    may_make_dir(osp.abspath(save_dir))
+    with ZipFile(zip_file) as z:
+        z.extractall(path=save_dir)
+    print("Extracting zip file done")
+
+    raw_dir = osp.join(save_dir, osp.basename(zip_file)[:-4])
+
+    im_paths = []
+    nums = []
+
+    # full path name
+    im_paths_ = get_im_names(osp.join(raw_dir, 'bounding_box_train'),
+                            return_path=True, return_np=False)
+    im_paths_.sort()
+    im_paths += list(im_paths_)
+    nums.append(len(im_paths_))
+
+    im_paths_ = get_im_names(osp.join(raw_dir, 'bounding_box_test'),
+                            return_path=True, return_np=False)
+    im_paths_.sort()
+    im_paths_ = [p for p in im_paths_ if not osp.basename(p).startswith('-1')]
+    im_paths += list(im_paths_)
+    nums.append(len(im_paths_))
+
+    im_paths_ = get_im_names(osp.join(raw_dir, 'query'),
+                            return_path=True, return_np=False)
+    im_paths_.sort()
+    im_paths += list(im_paths_)
+    nums.append(len(im_paths_))
+    q_ids_cams = set([(parse_original_im_name(osp.basename(p), 'id'),
+                     parse_original_im_name(osp.basename(p), 'cam'))
+                        for p in im_paths_])
+
+    im_paths_ = get_im_names(osp.join(raw_dir, 'gt_bbox'),
+                            return_path=True, return_np=False)
+    im_paths_.sort()
+    # Only gather images for those ids and cams used in testing.
+    im_paths_ = [p for p in im_paths_
+                if (parse_original_im_name(osp.basename(p), 'id'),
+                    parse_original_im_name(osp.basename(p), 'cam'))
+                    in q_ids_cams]
+    im_paths += list(im_paths_)
+    nums.append(len(im_paths_))
+
+    split = dict()
+    keys = ['trainval_im_names', 'gallery_im_names', 'q_im_names', 'mq_im_names']
+    inds = [0] + nums
+    inds = np.cumsum(np.array(inds))# get index position
+    for i, k in enumerate(keys):
+        split[k] = im_paths[inds[i]:inds[i + 1]]
+
+    return split
 
 
-def write_picture_label_to_text(data_dir, dest_file, identity_num):
-    '''
-    将图片转成tf读取的二进制格式数据
-    args:
-        data_dir:训练数据路径
-        dest_file:最终存放图片和label全路径文件名
-        identity_num:外部传入的累计行人的个数，用来确定分类数
-    returns:
-        identity 累计总个数
-    '''
+def transform(zip_file, save_dir=None):
+    """
+    Refactor file directories, partition the train/val/test set.
+    """
 
-    person_dict = {}#行人ID和行人序号构成的自定{'id':序号}，该序号刚好是picture_list中元素的索引
-    picture_list=[]#图片名列表[[(序号，p1),(序号，p2), ...], ...],将索引存入数据方便后续随机选取数据
-    
-    #获取目录下的所有文件名
-    filenames = [files for files in os.listdir(data_dir) if os.path.isfile(os.path.join(data_dir, files))]
-    print('there are %d pictures in market1501' % len(filenames))
-    total_num = 0#该数据集中行人总数
-    for file in filenames:
-        #获取视角id,行人id，摄像机id,图片id
-        personId= file[0:4]
-        if personId not in person_dict.keys():
-            person_dict[personId] = total_num
-            total_num += 1
-        
-    for i in range(total_num):
-        picture_list.append([])
-    
-    for file in filenames:
-        personId= file[0:4]
-        
-        if len(picture_list[person_dict[personId]]) == 0:
-            picture_list[person_dict[personId]] = [(person_dict[personId], os.path.join(data_dir, file))]
-        else:
-            picture_list[person_dict[personId]].append((person_dict[personId], os.path.join(data_dir, file)))
-        
-    del filenames
-    del person_dict
-        
-    images_per_id = read_conf.get_conf_int_param('hyper_param', 'images_per_id')
-    with open(dest_file, 'a+') as f:
-        # 数据转换直到picture_list为空
-        while len(picture_list) != 0:
-            index = random.randint(0, len(picture_list)-1)#随机选取行人
-            if len(picture_list[index]) >= images_per_id:#不够采样要求了删除整个人的图片列表
-                sample_pictures = random.sample(picture_list[index], images_per_id)#从人的图片中随机选择
-                #写入文件
-                for pictures in sample_pictures:
-                    f.write(pictures[1])
-                    f.write(' ')
-                    f.write(str(pictures[0]))
-                    f.write('\n')
-                    f.flush()
-                # 删除已经使用过的
-                picture_list[index] = list(set(picture_list[index]).difference(set(sample_pictures)))
-            else:
-                picture_list.pop(index)
-    
-    return total_num + identity_num
+    #train_test_split_file = osp.join(save_dir, 'train_test_split.pkl')
+    train_test_split = get_images_split(zip_file, save_dir)
+  
+    # == partition train/val/ set ==
+    # get the trainval_ids by set data structure
+    trainval_ids = list(set([parse_full_path_im_name(n, 'id')
+                            for n in train_test_split['trainval_im_names']]))
+    # Sort ids, so that id-to-label mapping remains the same when running
+    # the code on different machines.
+    trainval_ids.sort()
+    # trans the ids to lables
+    trainval_ids2labels = dict(zip(trainval_ids, range(len(trainval_ids))))
+    partitions = partition_train_val_set(
+                    train_test_split['trainval_im_names'], parse_full_path_im_name, val_ids_num=100)
+    train_im_names = partitions['train_im_names']
+    train_ids = list(set([parse_full_path_im_name(n, 'id')
+                        for n in partitions['train_im_names']]))
+    # Sort ids, so that id-to-label mapping remains the same when running
+    # the code on different machines.
+    train_ids.sort()
+    train_ids2labels = dict(zip(train_ids, range(len(train_ids))))
+
+    # A mark is used to denote whether the image is from
+    #   query (mark == 0), or
+    #   gallery (mark == 1), or
+    #   multi query (mark == 2) set
+
+    val_marks = [0, ] * len(partitions['val_query_im_names']) \
+                + [1, ] * len(partitions['val_gallery_im_names'])
+    val_im_names = list(partitions['val_query_im_names']) \
+                    + list(partitions['val_gallery_im_names'])
+
+    test_im_names = list(train_test_split['q_im_names']) \
+                    + list(train_test_split['mq_im_names']) \
+                    + list(train_test_split['gallery_im_names'])
+    test_marks = [0, ] * len(train_test_split['q_im_names']) \
+                + [2, ] * len(train_test_split['mq_im_names']) \
+                + [1, ] * len(train_test_split['gallery_im_names'])
+
+    partitions = {'trainval_im_names': train_test_split['trainval_im_names'],
+                    'trainval_ids2labels': trainval_ids2labels,
+                    'train_im_names': train_im_names,
+                    'train_ids2labels': train_ids2labels,
+                    'val_im_names': val_im_names,
+                    'val_marks': val_marks,
+                    'test_im_names': test_im_names,
+                    'test_marks': test_marks}
+    partition_file = osp.join(save_dir, 'partitions.pkl')
+    save_pickle(partitions, partition_file)
+    print('Partition file saved to {}'.format(partition_file))
 
 
+if __name__ == '__main__':
+    import argparse
 
-
-
-def create_train_file(data_dir, identity_num):
-    '''
-    将图片转成tf读取的二进制格式数据
-    args:
-        data_dir:训练数据路径
-        identity_num:外部传入的累计行人的个数，用来确定分类数
-    returns:
-        identity 累计总个数
-    '''
-
-    person_dict = {}#行人ID和行人序号构成的自定{'id':序号}，该序号刚好是picture_list中元素的索引
-    picture_list=[]#图片名列表[[(序号，p1),(序号，p2), ...], ...],将索引存入数据方便后续随机选取数据
-    
-    #获取目录下的所有文件名
-    filenames = [files for files in os.listdir(data_dir) if os.path.isfile(os.path.join(data_dir, files))]
-    print('there are %d pictures in chuhk03' % len(filenames))
-    total_num = 0#该数据集中行人总数
-    for file in filenames:
-        #获取视角id,行人id，摄像机id,图片id
-        personId= file[0:4]
-        if personId not in person_dict.keys():
-            person_dict[personId] = total_num
-            total_num += 1
-        
-    for i in range(total_num):
-        picture_list.append([])
-    
-    for file in filenames:
-        personId= file[0:4]
-        
-        if len(picture_list[person_dict[personId]]) == 0:
-            picture_list[person_dict[personId]] = [(person_dict[personId], os.path.join(data_dir, file))]
-        else:
-            picture_list[person_dict[personId]].append((person_dict[personId], os.path.join(data_dir, file)))
-        
-    del filenames
-    del person_dict
-        
-    dest_dir = os.path.join(data_dir, 'bin_file')
-    if not os.path.exists(dest_dir):
-        os.makedirs(dest_dir) 
-    turn_file_to_bin(picture_list, identity_num, dest_dir, 'market1501_train')
-    
-    return total_num + identity_num
-
-
-
-def turn_picture_to_bin(picture_file):
-    '''
-    将图片转换成二进制格式写入文件
-    input:
-        picture_file:图片文件名
-    output:
-        输出待写入的np.array
-    '''
-    img = cv.imread(picture_file)
-    img = cv.resize(img,(IMAGE_WITH, IMAGE_HEIGHT))
-    img = img[:,:,[2,1,0]]#BGR ==>RGB
-    l = []
-    #RRRRGGGGBBBBB这样的顺序
-    l.extend(img[:,:,0].reshape(IMAGE_HEIGHT*IMAGE_WITH, order='C'))
-    l.extend(img[:,:,1].reshape(IMAGE_HEIGHT*IMAGE_WITH, order='C'))
-    l.extend(img[:,:,2].reshape(IMAGE_HEIGHT*IMAGE_WITH, order='C'))
-    
-    return np.array(l, np.uint16)
-
-
-
-def turn_file_to_bin(picture_list,identity_num, 
-                         dest_path, dest_name, file_limit=400):
-    '''
-    数据集中的将文件转换成二进制文件
-    input:
-        picture_list:全路径图片数据
-        identity_num:外部传入的累计行人的个数，用来确定分类数
-        dest_path:二进制文件存放路径
-        dest_name:转换后生成的文件名前缀，
-        file_limit:转换后的文件大小限制，超过此文件大小将会自动分割,单位M
-    '''
-    images_per_id = read_conf.get_conf_int_param('hyper_param', 'images_per_id')
-    serial_number = 1
-    new_file_name = os.path.join(dest_path, dest_name)  + '_' + str(serial_number)+ ".bin"
-    
-    f = None
-    try:
-        f = open(new_file_name, 'wb')
-        
-        # 数据转换直到picture_list为空
-        while len(picture_list) != 0:
-            index = random.randint(0, len(picture_list)-1)#随机选取行人
-            if len(picture_list[index]) >= images_per_id:#不够采样要求了删除整个人的图片列表
-                sample_pictures = random.sample(picture_list[index], images_per_id)#从人的图片中随机选择
-                #写入文件
-                for pictures in sample_pictures:
-                    f.write(np.uint16(pictures[0]) + np.uint16(identity_num))
-                    f.write(turn_picture_to_bin(pictures[1]))
-                    f.flush()
-                # 删除已经使用过的
-                picture_list[index] = list(set(picture_list[index]).difference(set(sample_pictures)))
-            else:
-                picture_list.pop(index)
-        
-            #一个图片对写完了判断文件大小,超过限制重新创建文件
-            if os.path.getsize(new_file_name)/1024.0/1024.0 > file_limit:
-                f.close()
-                serial_number += 1
-                new_file_name = os.path.join(dest_path, dest_name)  + '_' + str(serial_number)+ ".bin"
-                f = open(new_file_name, 'wb')
-    finally:
-        if f:
-            f.close()
-        
-        
+    parser = argparse.ArgumentParser(description="Transform Market1501 Dataset")
+    parser.add_argument('--zip_file', type=str,
+                        default='~/Dataset/market1501/Market-1501-v15.09.15.zip')
+    parser.add_argument('--save_dir', type=str,
+                        default='~/Dataset/market1501')
+    args = parser.parse_args()
+    zip_file = osp.abspath(osp.expanduser(args.zip_file))
+    save_dir = osp.abspath(osp.expanduser(args.save_dir))
+    transform(zip_file, save_dir)

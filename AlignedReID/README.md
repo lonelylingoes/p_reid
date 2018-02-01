@@ -1,7 +1,10 @@
-Implementation for CVPR 2017 Paper: "AlignedReID: Surpassing Human-level Performance in Person Re-Identification".
-This code depends on tensorflow 1.1.0
+Implementation for CVPR 2017 Paper: "AlignedReID: Surpassing Human-level Performance in Person Re-Identification" by pytorch.
 
-疑问：
-1.有些loss的计算求了均值，有些loss的计算求了均值，相加起来会不会不成比例？
-2.从数据集中组成一个mini-batch时，是每次都是随机采集的，还是一个照片不会在mini-batch中重复出现。
-2.章节4.2中不同的学习率是什么个意思？各种loss之间，前段不都是共享的参数吗？
+
+Thanks for [huanghoujing's AlignedReID-Re-Production-Pytorch](https://github.com/huanghoujing/AlignedReID-Re-Production-Pytorch), I completed the Implementation of the paper. I rewrited some codes for esier understanding for myself, and  there are many similarities in the repository with huanghoujing's.
+
+---
+
+
+## requriment
+
