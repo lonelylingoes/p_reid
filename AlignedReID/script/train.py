@@ -33,7 +33,7 @@ def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
     args:
         train_loader:
         model: 
-        loss_dict: loss dict
+        loss_dict: total_loss dict
         optimizer: 
         epoch: current epoch
         cfg: config
@@ -58,9 +58,12 @@ def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
     epoch_start = time.time()
     for step, (ims, labels) in enumerate(train_loader):
         step_start = time.time()
+        # change the shape of ims and labels
+        ims = ims.view(-1, ims.size()[2], ims.size()[3], ims.size()[4])
+        labels = labels.view(-1, )
 
-        ims_var = Variable(transer_var_tensor(torch.from_numpy(ims).float()))
-        labels_t = transer_var_tensor(torch.from_numpy(labels).long())
+        ims_var = Variable(transer_var_tensor(ims.float()))
+        labels_t = transer_var_tensor(labels.long())
         labels_var = Variable(labels_t)
 
         global_feat, local_feat, logits = model(ims_var)
@@ -85,12 +88,12 @@ def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
         if cfg.id_loss_weight > 0:
             id_loss = loss_dict['id_criterion'](logits, labels_var)
 
-        loss = g_loss * cfg.g_loss_weight \
+        total_loss = g_loss * cfg.g_loss_weight \
                 + l_loss * cfg.l_loss_weight \
                 + id_loss * cfg.id_loss_weight
 
         optimizer.zero_grad()
-        loss.backward()
+        total_loss.backward()
         optimizer.step()
 
         # precision
@@ -123,15 +126,14 @@ def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
         if cfg.id_loss_weight > 0:
             meter_dict['id_loss_meter'].update(common_utils.to_scalar(id_loss))
 
-        meter_dict['loss_meter'].update(common_utils.to_scalar(loss))
+        meter_dict['loss_meter'].update(common_utils.to_scalar(total_loss))
 
         # step log
         step_log(meter_dict, step_start, cfg, epoch, step)
-        # Epoch Log 
-        epoch_log(meter_dict, epoch_start, cfg, epoch)
-        # tensorboar log
-        tensorBoard_log(meter_dict, cfg, epoch, writer=None)
-
+    # Epoch Log 
+    epoch_log(meter_dict, epoch_start, cfg, epoch)
+    # tensorboar log
+    tensorBoard_log(meter_dict, cfg, epoch, writer=None)
     # save ckpt
     model_utils.save_ckpt(model, optimizer, epoch + 1, cfg.ckpt_file)
 
@@ -177,7 +179,7 @@ def step_log(meter_dict, step_start, cfg, epoch, step):
     else:
         id_log = ''
 
-    total_loss_log = ', loss {:.4f}'.format(meter_dict['loss_meter'].val)
+    total_loss_log = ', total_loss {:.4f}'.format(meter_dict['loss_meter'].val)
 
     log = time_log + \
         g_log + l_log + id_log + \
@@ -222,7 +224,7 @@ def epoch_log(meter_dict, epoch_start, cfg, epoch):
     else:
         id_log = ''
 
-    total_loss_log = ', loss {:.4f}'.format(meter_dict['loss_meter'].avg)
+    total_loss_log = ', total_loss {:.4f}'.format(meter_dict['loss_meter'].avg)
 
     log = time_log + \
         g_log + l_log + id_log + \
@@ -246,11 +248,11 @@ def tensorBoard_log(meter_dict, cfg, epoch, writer=None):
         writer = SummaryWriter(log_dir=osp.join(cfg.exp_dir, 'tensorboard'))
     
     writer.add_scalars(
-        'loss',
+        'total_loss',
         dict(global_loss=meter_dict['g_loss_meter'].avg,
             local_loss=meter_dict['l_loss_meter'].avg,
             id_loss=meter_dict['id_loss_meter'].avg,
-            loss=meter_dict['loss_meter'].avg, ),
+            total_loss=meter_dict['loss_meter'].avg, ),
         epoch)
     writer.add_scalars(
         'tri_precision',

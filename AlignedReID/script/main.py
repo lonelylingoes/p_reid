@@ -32,7 +32,7 @@ def main():
     cfg = config.Config()
 
     # set cpu or gpus which will be used
-    common_utils.set_devices(cfg.sys_device_ids)
+    #common_utils.set_devices(cfg.sys_device_ids)
 
     # set seed for all possibale moudel
     if cfg.seed is not None:
@@ -51,11 +51,13 @@ def main():
     print('-' * 60)
     
     # create train data set
-    train_transform = transforms.compose(
+    train_transform = transforms.Compose(
                         [transforms.RandomHorizontalFlip(),
                         transforms.RandomResizedCrop(cfg.im_crop_size),
-                        transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std),
-                        transforms.ToTensor()]
+                        transforms.ToTensor(),
+                        # the object of normalize should be tensor,
+                        # so totensor() should called before normalize()  
+                        transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
                         )   
     train_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
                                 'train',
@@ -66,17 +68,19 @@ def main():
         train_dataset, batch_size=cfg.ids_per_batch,
         num_workers=cfg.workers, pin_memory=True)
     # create test data set
-    val_transform = transforms.compose(
+    val_transform = transforms.Compose(
                         [transforms.Resize(cfg.im_resize_size),
                         transforms.CenterCrop(cfg.im_crop_size),
-                        transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std),
-                        transforms.ToTensor()]
+                        transforms.ToTensor(),
+                        # the object of normalize should be tensor,
+                        # so totensor() should called before normalize() 
+                        transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
                         )
     val_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
                                 'val',
                                 val_transform)
     val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=cfg.batch_size,
+        val_dataset, batch_size=cfg.test_batch_size,
         num_workers=cfg.workers, pin_memory=True)
 
 

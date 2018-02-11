@@ -21,7 +21,7 @@ class Config(object):
                         choices=['trainval', 'train'])
 
     # Only for training set.
-    parser.add_argument('--ids_per_batch', type=int, default=32)
+    parser.add_argument('--ids_per_batch', type=int, default=64)
     parser.add_argument('--ims_per_id', type=int, default=4)
 
     parser.add_argument('--log_to_file', type=str2bool, default=True)
@@ -32,7 +32,7 @@ class Config(object):
     parser.add_argument('-lm', '--local_margin', type=float, default=0.3)
     parser.add_argument('-glw', '--g_loss_weight', type=float, default=1.)
     parser.add_argument('-llw', '--l_loss_weight', type=float, default=0.)
-    parser.add_argument('-idlw', '--id_loss_weight', type=float, default=0.)
+    parser.add_argument('-idlw', '--id_loss_weight', type=float, default=1)
     parser.add_argument('-pmlw', '--pm_loss_weight', type=float, default=1.)
     parser.add_argument('-gdmlw', '--gdm_loss_weight', type=float, default=1.)
     parser.add_argument('-ldmlw', '--ldm_loss_weight', type=float, default=0.)
@@ -72,7 +72,7 @@ class Config(object):
     # Image Processing
     # (width, height)
     self.im_resize_size = (256, 256)
-    self.im_crop_size = (224, 224)
+    self.im_crop_size = 224
     # Whether to scale by 1/255
     self.scale_im = True
     self.im_mean = [0.485, 0.456, 0.406]
@@ -144,11 +144,13 @@ class Config(object):
 
     # How often (in batches) to log. If only need to log the average
     # information for each epoch, set this to a large value, e.g. 1e10.
-    self.log_steps = 1e10
+    self.log_steps = 20
 
     # Only test and without training.
     self.only_test = args.only_test
-
+    self.separate_camera_set = False
+    self.single_gallery_shot = False
+    self.first_match_break = True
     self.resume = args.resume
 
     #######

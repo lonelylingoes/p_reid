@@ -56,7 +56,7 @@ def normalize(x, axis=-1):
     Returns:
         x: pytorch Variable, same shape as input      
     """
-    x = x / (torch.norm(x, 2, axis).expand_as(x) + 1e-12)
+    x = x / (torch.norm(x, 2, axis, keepdim=True).expand_as(x) + 1e-12)
     return x
 
 def normalize_np(nparray, order=2, axis=0):
@@ -102,8 +102,8 @@ def compute_dist_np(array1, array2, type='euclidean'):
     """
     assert type in ['cosine', 'euclidean']
     if type == 'cosine':
-        array1 = normalize(array1, axis=1)
-        array2 = normalize(array2, axis=1)
+        array1 = normalize_np(array1, axis=1)
+        array2 = normalize_np(array2, axis=1)
         dist = np.matmul(array1, array2.T)
         return dist
     else:
@@ -333,16 +333,13 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
     is_neg = labels.expand(N, N).ne(labels.expand(N, N).t())
 
     # `dist_ap` means distance(anchor, positive)
-    # both `dist_ap` and `relative_p_inds` with shape [N, 1]
+    # both `dist_ap` and `relative_p_inds` with shape [N]
     dist_ap, relative_p_inds = torch.max(
         dist_mat[is_pos].contiguous().view(N, -1), 1)
     # `dist_an` means distance(anchor, negative)
-    # both `dist_an` and `relative_n_inds` with shape [N, 1]
+    # both `dist_an` and `relative_n_inds` with shape [N]
     dist_an, relative_n_inds = torch.min(
         dist_mat[is_neg].contiguous().view(N, -1), 1)
-    # shape [N]
-    dist_ap = dist_ap.squeeze(1)
-    dist_an = dist_an.squeeze(1)
 
     if return_inds:
         # shape [N, N]
@@ -351,9 +348,9 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
             .unsqueeze(0).expand(N, N))
         # shape [N, 1]
         p_inds = torch.gather(
-                    ind[is_pos].contiguous().view(N, -1), 1, relative_p_inds.data)
+                    ind[is_pos].contiguous().view(N, -1), 1, relative_p_inds.data.view(-1,1))
         n_inds = torch.gather(
-                    ind[is_neg].contiguous().view(N, -1), 1, relative_n_inds.data)
+                    ind[is_neg].contiguous().view(N, -1), 1, relative_n_inds.data.view(-1,1))
         # shape [N]
         p_inds = p_inds.squeeze(1)
         n_inds = n_inds.squeeze(1)

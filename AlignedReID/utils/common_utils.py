@@ -22,6 +22,18 @@ from contextlib import contextmanager
 import torch
 from torch.autograd import Variable
 
+def load_pickle(path):
+    """
+    Check and load pickle object.
+    According to this post: https://stackoverflow.com/a/41733927, cPickle and 
+    disabling garbage collector helps with loading speed."""
+    assert osp.exists(path)
+    # gc.disable()
+    with open(path, 'rb') as f:
+        ret = pickle.load(f)
+    # gc.enable()
+    return ret
+
 
 def may_make_dir(path):
     """

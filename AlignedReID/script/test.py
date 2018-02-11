@@ -40,16 +40,16 @@ def test(val_loader, model, cfg):
     
     with measure_time('Extracting feature...'):
         for i, (ims_, ids_, cams_, marks_) in enumerate(val_loader):
-            ims_var = Variable(transer_var_tensor(torch.from_numpy(ims_).float()), volatile=True)
+            ims_var = Variable(transer_var_tensor(ims_).float(), volatile=True)
             global_feat, local_feat, logits = model(ims_var)
             global_feat = global_feat.data.cpu().numpy()
             local_feat = local_feat.data.cpu().numpy()
-
             global_feats.append(global_feat)
             local_feats.append(local_feat)
-            ids.append(ids_)
-            cams.append(cams_)
-            marks.append(marks_)
+
+            ids.append(ids_.cpu().numpy())
+            cams.append(cams_.cpu().numpy())
+            marks.append(marks_.cpu().numpy())
 
     global_feats = np.vstack(global_feats)
     local_feats = np.concatenate(local_feats)
@@ -93,9 +93,10 @@ def test(val_loader, model, cfg):
         with measure_time('Computing scores for re-ranked Global Distance...'):
             mAP, cmc_scores = compute_score(re_r_global_q_g_dist, ids, cams, q_inds, g_inds, cfg)
 
-
+    use_local_distance = (cfg.l_loss_weight > 0) \
+                        and cfg.local_dist_own_hard_sample
     # Local Distance 
-    if cfg.use_local_distance:
+    if use_local_distance:
         # query-gallery distance using local distance
         local_q_g_dist = low_memory_local_dist(
             local_feats[q_inds], local_feats[g_inds])
