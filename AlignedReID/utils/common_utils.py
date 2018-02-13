@@ -18,6 +18,7 @@ from scipy import io
 import datetime
 import time
 from contextlib import contextmanager
+import cv2
 
 import torch
 from torch.autograd import Variable
@@ -209,3 +210,39 @@ def measure_time(enter_msg):
     print('Done, {:.2f}s'.format(time.time() - st))
 
 
+
+def pre_process_im(im_path,
+                resize_size,
+                im_mean=[0.485, 0.456, 0.406],
+                im_std=[0.229, 0.224, 0.225],
+                batch_dims = 'NCHW'):
+    """
+    Pre-process image.
+    args:
+        resize_size: (height, width)
+        im_mean: the mean of the image
+        im_std: the std of the image
+        batch_dims: indicate wether 'NCHW' or 'NHWC'
+    """
+    im = cv2.imread(im_path)
+    im = im[:,:,[2,1,0]]
+    # Resize.
+    if resize_size is not None:
+        im = cv2.resize(im, (resize_size[1],resize_size[0] ), interpolation=cv2.INTER_LINEAR)
+
+    # Subtract mean and scaled by std
+    # im -= np.array(self.im_mean) # This causes an error:
+    # Cannot cast ufunc subtract output from dtype('float64') to
+    # dtype('uint8') with casting rule 'same_kind'
+    if im_mean is not None:
+        # scaled by 1/255.
+        im = im / 255.
+        im = im - np.array(im_mean)
+    if im_mean is not None and im_std is not None:
+        im = im / np.array(im_std).astype(float)
+
+    # The original image has dims 'HWC', transform it to 'CHW'.
+    if batch_dims == 'NCHW':
+        im = im.transpose(2, 0, 1)
+
+    return im
