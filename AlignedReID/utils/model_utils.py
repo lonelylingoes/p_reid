@@ -57,7 +57,7 @@ def load_ckpt(model, optimizer, ckpt_file, load_to_cpu=False, verbose=True):
     """
     map_location = (lambda storage, loc: storage) if load_to_cpu else None
     checkpoint = torch.load(ckpt_file, map_location=map_location)
-    model.load_state_dict(checkpoint['state_dict'])
+    model.load_state_dict(checkpoint['state_dicts'])
     optimizer.load_state_dict(checkpoint['optimizer'])
 
     if verbose:
@@ -163,3 +163,33 @@ def transer_var_tensor(var_or_tensor, device_id = 0):
         else var_or_tensor.cuda(device_id)
 
 
+def load_test_model(model, cfg):
+    '''
+    load the param from train model for test model
+    args:
+        model: the init model 
+        cfg: Config object
+    return:
+        model: the model loaded the param
+    '''
+    map_location = (lambda storage, loc: storage)
+    if cfg.model_weight_file != '':
+        src_state_dict = torch.load(cfg.model_weight_file, map_location=map_location)
+    else:
+        checkpoint = torch.load(cfg.ckpt_file, map_location=map_location)
+        src_state_dict = checkpoint['state_dicts']
+        
+    # del the unused layer when test
+    dest_state_dict = model.state_dict()
+    for name, param in src_state_dict.items():
+        if name not in dest_state_dict:
+            continue
+        if isinstance(param, torch.nn.Parameter):
+            # backwards compatibility for serialized parameters
+            param = param.data
+        try:
+            dest_state_dict[name].copy_(param)
+        except Exception, msg:
+            print("Warning: Error occurs when copying '{}': {}".format(name, str(msg)))
+
+    return model

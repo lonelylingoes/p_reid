@@ -148,11 +148,11 @@ def step_log(meter_dict, step_start, cfg, epoch, step):
         epoch: current epoch
         step: currnet step
     '''
-    if step % cfg.log_steps == 0:
+    if step % cfg.log_steps != 0:
         return
 
     time_log = '\tStep {}/epoch {}, {:.2f}s'.format(
-        step, epoch + 1, time.time() - step_start, )
+        step+1, epoch + 1, time.time() - step_start, )
 
     if cfg.g_loss_weight > 0:
         g_log = (', gp {:.2%}, gm {:.2%}, '

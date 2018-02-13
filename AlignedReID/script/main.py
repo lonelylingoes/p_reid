@@ -50,45 +50,36 @@ def main():
     pprint.pprint(cfg.__dict__)
     print('-' * 60)
     
-    # create train data set
-    train_transform = transforms.Compose(
-                        [transforms.RandomHorizontalFlip(),
-                        transforms.RandomResizedCrop(cfg.im_crop_size),
-                        transforms.ToTensor(),
-                        # the object of normalize should be tensor,
-                        # so totensor() should called before normalize()  
-                        transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
-                        )   
-    train_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
-                                'train',
-                                train_transform,
-                                cfg.ids_per_batch,
-                                cfg.ims_per_id)
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=cfg.ids_per_batch,
-        num_workers=cfg.workers, pin_memory=True)
-    # create test data set
-    val_transform = transforms.Compose(
-                        [transforms.Resize(cfg.im_resize_size),
-                        transforms.CenterCrop(cfg.im_crop_size),
-                        transforms.ToTensor(),
-                        # the object of normalize should be tensor,
-                        # so totensor() should called before normalize() 
-                        transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
-                        )
-    val_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
-                                'val',
-                                val_transform)
-    val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=cfg.test_batch_size,
-        num_workers=cfg.workers, pin_memory=True)
 
+    # test on test set
+    if cfg.only_test:
+        test_loader, _ = create_test_data_loader(cfg)
+        # create models
+        model = Model(local_conv_out_channels=128)
+        # load model param
+        model = model_utils.load_test_model(model, cfg)
+        # after load model, parallel the model
+        if torch.cuda.device_count() > 1:
+            print("Let's use", torch.cuda.device_count(), "GPUs for test!")
+            model = nn.DataParallel(model)
+        if torch.cuda.is_available():
+            model.cuda()
+        # just for test
+        test(test_loader, model, cfg)
+        return
+
+
+    # create train data set
+    train_loader, train_dataset = create_train_data_loader(cfg)
+    # create test data set
+    val_loader,_ = create_val_data_loader(cfg)
 
     # create models
     model = Model(local_conv_out_channels=128, 
                   num_classes=len(train_dataset.ids2labels))
+
     if torch.cuda.device_count() > 1:
-        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        print("Let's use", torch.cuda.device_count(), "GPUs for tain!")
         model = nn.DataParallel(model)
     if torch.cuda.is_available():
         model.cuda()
@@ -121,7 +112,7 @@ def main():
     # It enables benchmark mode in cudnn.
     # If your input size is changing a lot, then it might hurt runtime
     # if not, it should be much faster.
-    cudnn.benchmark = True
+    #cudnn.benchmark = True
 
     start_epoch = resume_epoch if cfg.resume else 0
     for epoch in range(start_epoch, cfg.total_epochs):
@@ -148,6 +139,85 @@ def main():
         test(val_loader, model, cfg)
 
 
+
+
+
+def create_train_data_loader(cfg):
+    '''
+    create the loader for train
+    args:
+        cfg:the object of Config
+    returns:
+        the data loader of train data
+    '''
+    train_transform = transforms.Compose(
+                        [transforms.RandomHorizontalFlip(),
+                        transforms.Resize(cfg.im_resize_size),
+                        transforms.RandomCrop(cfg.im_crop_size),
+                        transforms.ToTensor(),
+                        # the object of normalize should be tensor,
+                        # so totensor() should called before normalize()  
+                        transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
+                        )   
+    train_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
+                                'train',
+                                train_transform,
+                                cfg.ids_per_batch,
+                                cfg.ims_per_id)
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=cfg.ids_per_batch,
+        num_workers=cfg.workers, pin_memory=True)
+    return train_loader, train_dataset
+
+
+
+def create_val_data_loader(cfg):
+    '''
+    create the loader for valiadata
+    args:
+        cfg:the object of Config
+    returns:
+        the data loader of val data
+    '''
+    val_transform = transforms.Compose(
+                    [transforms.Resize(cfg.im_resize_size),
+                    transforms.CenterCrop(cfg.im_crop_size),
+                    transforms.ToTensor(),
+                    # the object of normalize should be tensor,
+                    # so totensor() should called before normalize() 
+                    transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
+                    )
+    val_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
+                                'val',
+                                val_transform)
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset, batch_size=cfg.test_batch_size,
+        num_workers=cfg.workers, pin_memory=True)
+    return val_loader, val_dataset
+
+
+def create_test_data_loader(cfg):
+    '''
+    create the loader for test data
+    args:
+        cfg:the object of Config
+    returns:
+        the data loader of test data
+    '''
+    test_transform = transforms.Compose(
+                    [transforms.Resize(cfg.im_crop_size),
+                    transforms.ToTensor(),
+                    # the object of normalize should be tensor,
+                    # so totensor() should called before normalize() 
+                    transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
+                    )
+    test_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
+                                'test',
+                                test_transform)
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=cfg.test_batch_size,
+        num_workers=cfg.workers, pin_memory=True)
+    return test_loader, test_dataset
 
 
 if __name__ == '__main__':

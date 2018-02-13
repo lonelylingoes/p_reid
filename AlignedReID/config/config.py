@@ -32,7 +32,7 @@ class Config(object):
     parser.add_argument('-lm', '--local_margin', type=float, default=0.3)
     parser.add_argument('-glw', '--g_loss_weight', type=float, default=1.)
     parser.add_argument('-llw', '--l_loss_weight', type=float, default=0.)
-    parser.add_argument('-idlw', '--id_loss_weight', type=float, default=1)
+    parser.add_argument('-idlw', '--id_loss_weight', type=float, default=0)
     parser.add_argument('-pmlw', '--pm_loss_weight', type=float, default=1.)
     parser.add_argument('-gdmlw', '--gdm_loss_weight', type=float, default=1.)
     parser.add_argument('-ldmlw', '--ldm_loss_weight', type=float, default=0.)
@@ -45,12 +45,12 @@ class Config(object):
     parser.add_argument('--base_lr', type=float, default=2e-4)
     parser.add_argument('--lr_decay_type', type=str, default='exp',
                         choices=['exp', 'staircase'])
-    parser.add_argument('--exp_decay_at_epoch', type=int, default=76)
+    parser.add_argument('--exp_decay_at_epoch', type=int, default=150)
     parser.add_argument('--staircase_decay_at_epochs',
                         type=str, default='(101, 201,)')
     parser.add_argument('--staircase_decay_multiply_factor',
                         type=float, default=0.1)
-    parser.add_argument('--total_epochs', type=int, default=150)
+    parser.add_argument('--total_epochs', type=int, default=300)
 
     args = parser.parse_known_args()[0]
 
@@ -70,12 +70,12 @@ class Config(object):
     self.trainset_part = args.trainset_part
 
     # Image Processing
-    # (width, height)
-    self.im_resize_size = (256, 256)
-    self.im_crop_size = 224
-    # Whether to scale by 1/255
-    self.scale_im = True
+    # (height, width)
+    self.im_resize_size = (256, 128)
+    self.im_crop_size = (256, 128)
+    # will scale by 1/255
     self.im_mean = [0.485, 0.456, 0.406]
+    #mean=[0.485, 0.456, 0.406]
     # Whether to divide by std, set to `None` to disable.
     # Dividing is applied only when subtracting mean is applied.
     self.im_std = [0.229, 0.224, 0.225]
@@ -84,7 +84,6 @@ class Config(object):
     self.ims_per_id = args.ims_per_id
 
     self.test_batch_size = 32
-    self.batch_dims='NCHW',
 
     ###############
     # ReID Model  #
@@ -144,7 +143,7 @@ class Config(object):
 
     # How often (in batches) to log. If only need to log the average
     # information for each epoch, set this to a large value, e.g. 1e10.
-    self.log_steps = 20
+    self.log_steps = 1e10
 
     # Only test and without training.
     self.only_test = args.only_test
@@ -199,4 +198,4 @@ class Config(object):
 
     # Saving model weights and optimizer states, for resuming.
     self.ckpt_file = osp.join(self.exp_dir, 'ckpt.pth')
-
+    self.model_weight_file = args.model_weight_file

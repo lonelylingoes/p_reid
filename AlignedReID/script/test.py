@@ -41,7 +41,8 @@ def test(val_loader, model, cfg):
     with measure_time('Extracting feature...'):
         for i, (ims_, ids_, cams_, marks_) in enumerate(val_loader):
             ims_var = Variable(transer_var_tensor(ims_).float(), volatile=True)
-            global_feat, local_feat, logits = model(ims_var)
+            global_feat, local_feat = model(ims_var)[:2]
+
             global_feat = global_feat.data.cpu().numpy()
             local_feat = local_feat.data.cpu().numpy()
             global_feats.append(global_feat)
