@@ -113,6 +113,7 @@ def main():
     # If your input size is changing a lot, then it might hurt runtime
     # if not, it should be much faster.
     #cudnn.benchmark = True
+    torch.backends.cudnn.enabled = False
 
     start_epoch = resume_epoch if cfg.resume else 0
     for epoch in range(start_epoch, cfg.total_epochs):
