@@ -139,8 +139,8 @@ def batch_compute_dist(x, y, type='euclidean'):
         pass
     else:
         # shape [N, m, n]
-        xx = torch.pow(x, 2).sum(-1).expand(N, m, n)
-        yy = torch.pow(y, 2).sum(-1).expand(N, n, m).permute(0, 2, 1)
+        xx = torch.pow(x, 2).sum(-1,keepdim=True).expand(N, m, n)
+        yy = torch.pow(y, 2).sum(-1,keepdim=True).expand(N, n, m).permute(0, 2, 1)
         dist = xx + yy
         dist.baddbmm_(1, -2, x, y.permute(0, 2, 1))
         dist = dist.clamp(min=1e-12).sqrt()  # for numerical stability
@@ -537,3 +537,42 @@ def total_loss(loss_dict, global_feat, local_feat, logits, labels, cfg):
             + id_loss * cfg.id_loss_weight
 
     return total_loss
+
+
+
+def global_local_loss(
+    tri_loss,
+    global_feat,
+    local_feat,
+    labels,
+    normalize_feature=True):
+    """
+    use global distance mining the hardest samples
+    Args:
+        tri_loss: a `TripletLoss` object
+        local_feat: pytorch Variable, shape [N, H, c] (NOTE THE SHAPE!)
+        labels: pytorch LongTensor, with shape [N]
+        normalize_feature: whether to normalize feature to unit length along the 
+            Channel dimension
+    Returns:
+        loss: pytorch Variable,with shape [1]
+        ===================
+        For Mutual Learning
+        ===================
+        dist_mat: pytorch Variable, pairwise local distance; shape [N, N]
+    """
+    if normalize_feature:
+        local_feat = normalize(local_feat, axis=-1)
+        local_feat = normalize(local_feat, axis=-1)
+
+    # shape [N, N]
+    # beacause in class Model, global feature has been squeezed,
+    # so here, call compute_dist(), otherwise, batch_compute_dist() should be called
+    g_dist_mat = compute_dist(global_feat, global_feat)
+    g_dist_ap, g_dist_an, p_inds, n_inds = hard_example_mining(
+        g_dist_mat, labels, return_inds=True)
+    
+    l_dist_ap = batch_local_dist(local_feat, local_feat[p_inds])
+    l_dist_an = batch_local_dist(local_feat, local_feat[n_inds])
+    loss = tri_loss(g_dist_ap+l_dist_ap, g_dist_an+l_dist_an)
+    return loss
