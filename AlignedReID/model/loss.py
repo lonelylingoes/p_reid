@@ -575,4 +575,4 @@ def global_local_loss(
     l_dist_ap = batch_local_dist(local_feat, local_feat[p_inds])
     l_dist_an = batch_local_dist(local_feat, local_feat[n_inds])
     loss = tri_loss(g_dist_ap+l_dist_ap, g_dist_an+l_dist_an)
-    return loss
+    return loss, g_dist_ap, g_dist_an, l_dist_ap, l_dist_an

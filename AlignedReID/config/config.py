@@ -21,17 +21,18 @@ class Config(object):
                         choices=['trainval', 'train'])
 
     # Only for training set.
-    parser.add_argument('--ids_per_batch', type=int, default=64)
+    parser.add_argument('--ids_per_batch', type=int, default=32)
     parser.add_argument('--ims_per_id', type=int, default=4)
 
     parser.add_argument('--log_to_file', type=str2bool, default=True)
-    parser.add_argument('--normalize_feature', type=str2bool, default=True)
+    parser.add_argument('--normalize_feature', type=str2bool, default=False)
     parser.add_argument('--local_dist_own_hard_sample',
                         type=str2bool, default=False)
     parser.add_argument('-gm', '--global_margin', type=float, default=0.3)
     parser.add_argument('-lm', '--local_margin', type=float, default=0.3)
     parser.add_argument('-glw', '--g_loss_weight', type=float, default=1.)
     parser.add_argument('-llw', '--l_loss_weight', type=float, default=0.)
+    parser.add_argument('-gllw', '--g_l_loss_weight', type=float, default=1)
     parser.add_argument('-idlw', '--id_loss_weight', type=float, default=0)
     parser.add_argument('-pmlw', '--pm_loss_weight', type=float, default=1.)
     parser.add_argument('-gdmlw', '--gdm_loss_weight', type=float, default=1.)
@@ -104,6 +105,8 @@ class Config(object):
     self.g_loss_weight = args.g_loss_weight
     # local loss weight
     self.l_loss_weight = args.l_loss_weight
+    # global + local loss weight
+    self.g_l_loss_weight = args.g_l_loss_weight
 
     ###############
     # Mutual Loss #
@@ -175,6 +178,7 @@ class Config(object):
         'lm_{}_'.format(tfs(self.local_margin)) +
         'glw_{}_'.format(tfs(self.g_loss_weight)) +
         'llw_{}_'.format(tfs(self.l_loss_weight)) +
+        'gllw_{}_'.format(tfs(self.g_l_loss_weight)) +
         'idlw_{}_'.format(tfs(self.id_loss_weight)) +
         'pmlw_{}_'.format(tfs(self.pm_loss_weight)) +
         'gdmlw_{}_'.format(tfs(self.gdm_loss_weight)) +
