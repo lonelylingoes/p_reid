@@ -167,6 +167,7 @@ def create_train_data_loader(cfg):
                                 cfg.ims_per_id)
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=cfg.ids_per_batch,
+        shuffle = True,
         num_workers=cfg.workers, pin_memory=True)
     return train_loader, train_dataset
 
