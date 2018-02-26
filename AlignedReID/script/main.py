@@ -152,16 +152,16 @@ def create_train_data_loader(cfg):
         the data loader of train data
     '''
     train_transform = transforms.Compose(
-                        [transforms.RandomHorizontalFlip(),
-                        transforms.Resize(cfg.im_resize_size),
+                        [transforms.Resize(cfg.im_resize_size),
                         transforms.RandomCrop(cfg.im_crop_size),
+                        transforms.RandomHorizontalFlip(),
                         transforms.ToTensor(),
                         # the object of normalize should be tensor,
                         # so totensor() should called before normalize()  
                         transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
                         )   
     train_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
-                                'train',
+                                cfg.trainset_part,
                                 train_transform,
                                 cfg.ids_per_batch,
                                 cfg.ims_per_id)

@@ -26,6 +26,7 @@ class Config(object):
 
     parser.add_argument('--log_to_file', type=str2bool, default=True)
     parser.add_argument('--normalize_feature', type=str2bool, default=False)
+    parser.add_argument('--to_re_rank', type=str2bool, default=False)
     parser.add_argument('--local_dist_own_hard_sample',
                         type=str2bool, default=False)
     parser.add_argument('-gm', '--global_margin', type=float, default=0.3)
@@ -92,7 +93,7 @@ class Config(object):
     self.local_dist_own_hard_sample = args.local_dist_own_hard_sample
 
     self.normalize_feature = args.normalize_feature
-    self.to_re_rank = True
+    self.to_re_rank = args.to_re_rank
 
     self.local_conv_out_channels = 128
     self.global_margin = args.global_margin
