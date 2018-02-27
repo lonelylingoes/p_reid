@@ -11,9 +11,13 @@ from resnet import resnet50
 
 
 class Model(nn.Module):
-  def __init__(self, local_conv_out_channels=128, num_classes=None, base_model_dir='../ckpt_dir'):
+  def __init__(self, 
+              local_conv_out_channels=128, 
+              num_classes=None, 
+              pretrained = True,
+              base_model_dir='../ckpt_dir'):
     super(Model, self).__init__()
-    self.base = resnet50(base_model_dir, pretrained=True)
+    self.base = resnet50(base_model_dir, pretrained)
     planes = 2048
     self.local_conv = nn.Conv2d(planes, local_conv_out_channels, 1)
     self.local_bn = nn.BatchNorm2d(local_conv_out_channels)
