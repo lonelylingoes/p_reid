@@ -1,3 +1,11 @@
+#-*- coding:utf-8 -*-
+#===================================
+# config program
+#===================================
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 from aligned_reid.utils.utils import load_pickle
 from aligned_reid.utils.utils import time_str
 from aligned_reid.utils.utils import str2bool
@@ -32,9 +40,9 @@ class Config(object):
     parser.add_argument('-gm', '--global_margin', type=float, default=0.3)
     parser.add_argument('-lm', '--local_margin', type=float, default=0.3)
     parser.add_argument('-glw', '--g_loss_weight', type=float, default=1.)
-    parser.add_argument('-llw', '--l_loss_weight', type=float, default=0.)
-    parser.add_argument('-gllw', '--g_l_loss_weight', type=float, default=1)
-    parser.add_argument('-idlw', '--id_loss_weight', type=float, default=0)
+    parser.add_argument('-llw', '--l_loss_weight', type=float, default=1.)
+    parser.add_argument('-gllw', '--g_l_loss_weight', type=float, default=0)
+    parser.add_argument('-idlw', '--id_loss_weight', type=float, default=1)
     parser.add_argument('-pmlw', '--pm_loss_weight', type=float, default=1.)
     parser.add_argument('-gdmlw', '--gdm_loss_weight', type=float, default=1.)
     parser.add_argument('-ldmlw', '--ldm_loss_weight', type=float, default=0.)
@@ -47,12 +55,12 @@ class Config(object):
     parser.add_argument('--base_lr', type=float, default=2e-4)
     parser.add_argument('--lr_decay_type', type=str, default='exp',
                         choices=['exp', 'staircase'])
-    parser.add_argument('--exp_decay_at_epoch', type=int, default=150)
+    parser.add_argument('--exp_decay_at_epoch', type=int, default=76)
     parser.add_argument('--staircase_decay_at_epochs',
                         type=str, default='(101, 201,)')
     parser.add_argument('--staircase_decay_multiply_factor',
                         type=float, default=0.1)
-    parser.add_argument('--total_epochs', type=int, default=300)
+    parser.add_argument('--total_epochs', type=int, default=150)
 
     args = parser.parse_known_args()[0]
 
