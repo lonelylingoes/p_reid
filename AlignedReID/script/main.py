@@ -160,7 +160,7 @@ def create_train_data_loader(cfg):
                         # so totensor() should called before normalize()  
                         transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
                         )   
-    train_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
+    train_dataset = ReIdDataSet('/data/DataSet/market1501/partitions.pkl',
                                 cfg.trainset_part,
                                 train_transform,
                                 cfg.ids_per_batch,
@@ -189,7 +189,7 @@ def create_val_data_loader(cfg):
                     # so totensor() should called before normalize() 
                     transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
                     )
-    val_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
+    val_dataset = ReIdDataSet('/data/DataSet/market1501/partitions.pkl',
                                 'val',
                                 val_transform)
     val_loader = torch.utils.data.DataLoader(
@@ -213,7 +213,7 @@ def create_test_data_loader(cfg):
                     # so totensor() should called before normalize() 
                     transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
                     )
-    test_dataset = ReIdDataSet('~/Dataset/market1501/partitions.pkl',
+    test_dataset = ReIdDataSet('/data/DataSet/market1501/partitions.pkl',
                                 'test',
                                 test_transform)
     test_loader = torch.utils.data.DataLoader(
