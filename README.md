@@ -1,1 +1,1 @@
-This repository contains some Implementations of papers which resarch on person re-identification.
+This repository contains some projects which resarch on person re-identification.
