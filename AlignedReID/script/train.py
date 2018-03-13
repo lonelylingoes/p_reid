@@ -53,12 +53,7 @@ def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
         l_dist_an_meter = model_utils.AverageMeter(),
         l_loss_meter = model_utils.AverageMeter(),
         id_loss_meter = model_utils.AverageMeter(),
-        loss_meter = model_utils.AverageMeter(),
-        g_l_prec_meter =model_utils.AverageMeter(),
-        g_l_m_meter = model_utils.AverageMeter(),
-        g_l_dist_ap_meter= model_utils.AverageMeter(),
-        g_l_dist_an_meter= model_utils.AverageMeter(),
-        g_l_loss_meter = model_utils.AverageMeter(),)
+        loss_meter = model_utils.AverageMeter(),)
 
     epoch_start = time.time()
     for step, (ims, labels) in enumerate(train_loader):
@@ -170,34 +165,27 @@ def step_log(meter_dict, step_start, cfg, epoch, step):
 
     g_log = ''
     l_log = ''
-    g_l_log = ''
-    if cfg.g_l_loss_weight == 0:
-        if cfg.g_loss_weight > 0:
-            g_log = (', gp {:.2%}, gm {:.2%}, '
-                    'gd_ap {:.4f}, gd_an {:.4f}, '
-                    'gL {:.4f}'.format(
-                meter_dict['g_prec_meter'].val, meter_dict['g_m_meter'].val,
-                meter_dict['g_dist_ap_meter'].val, meter_dict['g_dist_an_meter'].val,
-                meter_dict['g_loss_meter'].val, ))
-        else:
-            g_log = ''
 
-        if cfg.l_loss_weight > 0:
-            l_log = (', lp {:.2%}, lm {:.2%}, '
-                    'ld_ap {:.4f}, ld_an {:.4f}, '
-                    'lL {:.4f}'.format(
-                meter_dict['l_prec_meter'].val, meter_dict['l_m_meter'].val,
-                meter_dict['l_dist_ap_meter'].val, meter_dict['l_dist_an_meter'].val,
-                meter_dict['l_loss_meter'].val, ))
-        else:
-            l_log = ''
-    else:   
-        g_l_log = (', glp {:.2%}, glm {:.2%}, '
-                    'gld_ap {:.4f}, gld_an {:.4f}, '
-                    'glL {:.4f}'.format(
-                meter_dict['g_l_prec_meter'].avg, meter_dict['g_l_m_meter'].avg,
-                meter_dict['g_l_dist_ap_meter'].avg, meter_dict['g_l_dist_an_meter'].avg,
-                meter_dict['g_l_loss_meter'].avg, ))
+    if cfg.g_loss_weight > 0:
+        g_log = (', gp {:.2%}, gm {:.2%}, '
+                'gd_ap {:.4f}, gd_an {:.4f}, '
+                'gL {:.4f}'.format(
+            meter_dict['g_prec_meter'].val, meter_dict['g_m_meter'].val,
+            meter_dict['g_dist_ap_meter'].val, meter_dict['g_dist_an_meter'].val,
+            meter_dict['g_loss_meter'].val, ))
+    else:
+        g_log = ''
+
+    if cfg.l_loss_weight > 0:
+        l_log = (', lp {:.2%}, lm {:.2%}, '
+                'ld_ap {:.4f}, ld_an {:.4f}, '
+                'lL {:.4f}'.format(
+            meter_dict['l_prec_meter'].val, meter_dict['l_m_meter'].val,
+            meter_dict['l_dist_ap_meter'].val, meter_dict['l_dist_an_meter'].val,
+            meter_dict['l_loss_meter'].val, ))
+    else:
+        l_log = ''
+
 
 
     if cfg.id_loss_weight > 0:
@@ -208,7 +196,7 @@ def step_log(meter_dict, step_start, cfg, epoch, step):
     total_loss_log = ', total_loss {:.4f}'.format(meter_dict['loss_meter'].val)
 
     log = time_log + \
-        g_l_log + g_log + l_log + id_log + \
+        g_log + l_log + id_log + \
         total_loss_log
     print(log)
 
@@ -227,34 +215,27 @@ def epoch_log(meter_dict, epoch_start, cfg, epoch):
 
     g_log = ''
     l_log = ''
-    g_l_log = ''
-    if cfg.g_l_loss_weight == 0:
-        if cfg.g_loss_weight > 0:
-            g_log = (', gp {:.2%}, gm {:.2%}, '
-                    'gd_ap {:.4f}, gd_an {:.4f}, '
-                    'gL {:.4f}'.format(
-                meter_dict['g_prec_meter'].avg, meter_dict['g_m_meter'].avg,
-                meter_dict['g_dist_ap_meter'].avg, meter_dict['g_dist_an_meter'].avg,
-                meter_dict['g_loss_meter'].avg, ))
-        else:
-            g_log = ''
 
-        if cfg.l_loss_weight > 0:
-            l_log = (', lp {:.2%}, lm {:.2%}, '
-                    'ld_ap {:.4f}, ld_an {:.4f}, '
-                    'lL {:.4f}'.format(
-                meter_dict['l_prec_meter'].avg, meter_dict['l_m_meter'].avg,
-                meter_dict['l_dist_ap_meter'].avg, meter_dict['l_dist_an_meter'].avg,
-                meter_dict['l_loss_meter'].avg, ))
-        else:
-            l_log = ''
+    if cfg.g_loss_weight > 0:
+        g_log = (', gp {:.2%}, gm {:.2%}, '
+                'gd_ap {:.4f}, gd_an {:.4f}, '
+                'gL {:.4f}'.format(
+            meter_dict['g_prec_meter'].avg, meter_dict['g_m_meter'].avg,
+            meter_dict['g_dist_ap_meter'].avg, meter_dict['g_dist_an_meter'].avg,
+            meter_dict['g_loss_meter'].avg, ))
     else:
-        g_l_log = (', glp {:.2%}, glm {:.2%}, '
-                    'gld_ap {:.4f}, gld_an {:.4f}, '
-                    'glL {:.4f}'.format(
-                meter_dict['g_l_prec_meter'].avg, meter_dict['g_l_m_meter'].avg,
-                meter_dict['g_l_dist_ap_meter'].avg, meter_dict['g_l_dist_an_meter'].avg,
-                meter_dict['g_l_loss_meter'].avg, ))
+        g_log = ''
+
+    if cfg.l_loss_weight > 0:
+        l_log = (', lp {:.2%}, lm {:.2%}, '
+                'ld_ap {:.4f}, ld_an {:.4f}, '
+                'lL {:.4f}'.format(
+            meter_dict['l_prec_meter'].avg, meter_dict['l_m_meter'].avg,
+            meter_dict['l_dist_ap_meter'].avg, meter_dict['l_dist_an_meter'].avg,
+            meter_dict['l_loss_meter'].avg, ))
+    else:
+        l_log = ''
+
 
     if cfg.id_loss_weight > 0:
         id_log = (', idL {:.4f}'.format(meter_dict['id_loss_meter'].avg))
@@ -264,7 +245,7 @@ def epoch_log(meter_dict, epoch_start, cfg, epoch):
     total_loss_log = ', total_loss {:.4f}'.format(meter_dict['loss_meter'].avg)
 
     log = time_log + \
-        g_l_log + g_log + l_log + id_log + \
+        g_log + l_log + id_log + \
         total_loss_log
     print(log)
 
