@@ -41,7 +41,6 @@ class Config(object):
     parser.add_argument('-lm', '--local_margin', type=float, default=0.3)
     parser.add_argument('-glw', '--g_loss_weight', type=float, default=1.)
     parser.add_argument('-llw', '--l_loss_weight', type=float, default=1.)
-    parser.add_argument('-gllw', '--g_l_loss_weight', type=float, default=0)
     parser.add_argument('-idlw', '--id_loss_weight', type=float, default=1)
     parser.add_argument('-pmlw', '--pm_loss_weight', type=float, default=1.)
     parser.add_argument('-gdmlw', '--gdm_loss_weight', type=float, default=1.)
@@ -187,7 +186,6 @@ class Config(object):
         'lm_{}_'.format(tfs(self.local_margin)) +
         'glw_{}_'.format(tfs(self.g_loss_weight)) +
         'llw_{}_'.format(tfs(self.l_loss_weight)) +
-        'gllw_{}_'.format(tfs(self.g_l_loss_weight)) +
         'idlw_{}_'.format(tfs(self.id_loss_weight)) +
         'pmlw_{}_'.format(tfs(self.pm_loss_weight)) +
         'gdmlw_{}_'.format(tfs(self.gdm_loss_weight)) +

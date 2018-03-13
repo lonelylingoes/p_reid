@@ -76,32 +76,25 @@ def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
         # init loss value
         g_loss = 0
         l_loss = 0
-        g_l_loss = 0
         id_loss = 0
 
-        # separate the global and the local loss
-        if cfg.g_l_loss_weight == 0:
-            # gloabl
-            g_loss, p_inds, n_inds, g_dist_ap, g_dist_an, g_dist_mat = loss.global_loss(
-                loss_dict['g_tri_loss'], global_feat, labels_t,
-                normalize_feature=cfg.normalize_feature)
 
-            if cfg.l_loss_weight == 0:
-                l_loss = 0
-            elif cfg.local_dist_own_hard_sample:
-                # Let local distance find its own hard samples.
-                l_loss, l_dist_ap, l_dist_an, _ = loss.local_loss(
-                    loss_dict['l_tri_loss'], local_feat, None, None, labels_t,
-                    normalize_feature=cfg.normalize_feature)
-            else:
-                l_loss, l_dist_ap, l_dist_an = loss.local_loss(
-                    loss_dict['l_tri_loss'], local_feat, p_inds, n_inds, labels_t,
-                    normalize_feature=cfg.normalize_feature)
-        # compute global and local loss togather
+        # gloabl
+        g_loss, p_inds, n_inds, g_dist_ap, g_dist_an, g_dist_mat = loss.global_loss(
+            loss_dict['g_tri_loss'], global_feat, labels_t,
+            normalize_feature=cfg.normalize_feature)
+
+        if cfg.l_loss_weight == 0:
+            l_loss = 0
+        elif cfg.local_dist_own_hard_sample:
+            # Let local distance find its own hard samples.
+            l_loss, l_dist_ap, l_dist_an, _ = loss.local_loss(
+                loss_dict['l_tri_loss'], local_feat, None, None, labels_t,
+                normalize_feature=cfg.normalize_feature)
         else:
-            g_l_loss, g_dist_ap, g_dist_an, l_dist_ap, l_dist_an  = loss.global_local_loss(loss_dict['g_l_tri_loss'], 
-                                            global_feat, local_feat, labels_t, 
-                                            normalize_feature=cfg.normalize_feature)
+            l_loss, l_dist_ap, l_dist_an = loss.local_loss(
+                loss_dict['l_tri_loss'], local_feat, p_inds, n_inds, labels_t,
+                normalize_feature=cfg.normalize_feature)
             
         # id loss
         if cfg.id_loss_weight > 0:
@@ -110,54 +103,39 @@ def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
         # total loss 
         total_loss = g_loss * cfg.g_loss_weight \
                 + l_loss * cfg.l_loss_weight \
-                + id_loss * cfg.id_loss_weight \
-                + g_l_loss * cfg.g_l_loss_weight
+                + id_loss * cfg.id_loss_weight 
 
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
 
-        
-        if cfg.g_l_loss_weight == 0:
+        # precision
+        g_prec = (g_dist_an > g_dist_ap).data.float().mean()
+        # the proportion of triplets that satisfy margin
+        g_m = (g_dist_an > g_dist_ap + cfg.global_margin).data.float().mean()
+        g_d_ap = g_dist_ap.data.mean()
+        g_d_an = g_dist_an.data.mean()
+
+        meter_dict['g_prec_meter'].update(g_prec)
+        meter_dict['g_m_meter'].update(g_m)
+        meter_dict['g_dist_ap_meter'].update(g_d_ap)
+        meter_dict['g_dist_an_meter'].update(g_d_an)
+        meter_dict['g_loss_meter'].update(common_utils.to_scalar(g_loss))
+
+        if cfg.l_loss_weight > 0:
             # precision
-            g_prec = (g_dist_an > g_dist_ap).data.float().mean()
+            l_prec = (l_dist_an > l_dist_ap).data.float().mean()
             # the proportion of triplets that satisfy margin
-            g_m = (g_dist_an > g_dist_ap + cfg.global_margin).data.float().mean()
-            g_d_ap = g_dist_ap.data.mean()
-            g_d_an = g_dist_an.data.mean()
+            l_m = (l_dist_an > l_dist_ap + cfg.local_margin).data.float().mean()
+            l_d_ap = l_dist_ap.data.mean()
+            l_d_an = l_dist_an.data.mean()
 
-            meter_dict['g_prec_meter'].update(g_prec)
-            meter_dict['g_m_meter'].update(g_m)
-            meter_dict['g_dist_ap_meter'].update(g_d_ap)
-            meter_dict['g_dist_an_meter'].update(g_d_an)
-            meter_dict['g_loss_meter'].update(common_utils.to_scalar(g_loss))
+            meter_dict['l_prec_meter'].update(l_prec)
+            meter_dict['l_m_meter'].update(l_m)
+            meter_dict['l_dist_ap_meter'].update(l_d_ap)
+            meter_dict['l_dist_an_meter'].update(l_d_an)
+            meter_dict['l_loss_meter'].update(common_utils.to_scalar(l_loss))
 
-            if cfg.l_loss_weight > 0:
-                # precision
-                l_prec = (l_dist_an > l_dist_ap).data.float().mean()
-                # the proportion of triplets that satisfy margin
-                l_m = (l_dist_an > l_dist_ap + cfg.local_margin).data.float().mean()
-                l_d_ap = l_dist_ap.data.mean()
-                l_d_an = l_dist_an.data.mean()
-
-                meter_dict['l_prec_meter'].update(l_prec)
-                meter_dict['l_m_meter'].update(l_m)
-                meter_dict['l_dist_ap_meter'].update(l_d_ap)
-                meter_dict['l_dist_an_meter'].update(l_d_an)
-                meter_dict['l_loss_meter'].update(common_utils.to_scalar(l_loss))
-        else:
-            # precision
-            g_l_prec = (g_dist_an + l_dist_an > g_dist_ap + l_dist_ap).data.float().mean()
-            # the proportion of triplets that satisfy margin
-            g_l_m = (g_dist_an + l_dist_an > g_dist_ap + l_dist_ap + cfg.global_margin + cfg.local_margin).data.float().mean()
-            g_l_d_ap = (g_dist_ap+ l_dist_ap).data.mean()
-            g_l_d_an = (g_dist_an + l_dist_ap).data.mean()
-
-            meter_dict['g_l_prec_meter'].update(g_l_prec)
-            meter_dict['g_l_m_meter'].update(g_l_m)
-            meter_dict['g_l_dist_ap_meter'].update(g_l_d_ap)
-            meter_dict['g_l_dist_an_meter'].update(g_l_d_an)
-            meter_dict['g_l_loss_meter'].update(common_utils.to_scalar(g_l_loss))
 
         if cfg.id_loss_weight > 0:
             meter_dict['id_loss_meter'].update(common_utils.to_scalar(id_loss))
