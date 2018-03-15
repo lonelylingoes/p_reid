@@ -20,21 +20,41 @@ import time
 from collections import defaultdict
 import shutil
 
+new_im_name_tmpl = '{:08d}_{:04d}_{:08d}.jpg'
 
+def parse_original_new_im_name(im_name, parse_type='id'):
+    """Get the person id or cam from an image name."""
+    assert parse_type in ('id', 'cam')
+    if parse_type == 'id':
+        parsed = int(im_name[:8])
+    else:
+        parsed = int(im_name[9:13])
+    return parsed
 
-def get_im_names(im_dir, pattern='*.jpg', return_np=True, return_path=False):
+def parse_full_path_new_im_name(im_name, parse_type='id'):
     """
-    Get the image names in a dir. Optional to return numpy array, paths.
+    Get the person id or cam from an full path image name.
     """
-    im_paths = glob.glob(osp.join(im_dir, pattern))
-    im_names = [osp.basename(path) for path in im_paths]
-    ret = im_paths if return_path else im_names
-    if return_np:
-        ret = np.array(ret)
-    return ret
+    return parse_original_new_im_name(osp.basename(im_name), parse_type)
 
 
-def parse_original_im_name(im_name, parse_type='id'):
+def parse_original_duke_im_name(img_name, parse_type='id'):
+    """Get the person id or cam from an image name."""
+    assert parse_type in ('id', 'cam')
+    if parse_type == 'id':
+        parsed = int(img_name[:4])
+    else:
+        parsed = int(img_name[6])
+    return parsed
+
+def parse_full_path_duke_im_name(im_name, parse_type='id'):
+    """
+    Get the person id or cam from an full path image name.
+    """
+    return parse_original_duke_im_name(osp.basename(im_name), parse_type)
+
+
+def parse_original_market1501_im_name(im_name, parse_type='id'):
     """
     Get the person id or cam from an image name.
     """
@@ -46,11 +66,38 @@ def parse_original_im_name(im_name, parse_type='id'):
     return parsed
 
 
-def parse_full_path_im_name(im_name, parse_type='id'):
+def parse_full_path_market1501_im_name(im_name, parse_type='id'):
     """
     Get the person id or cam from an full path image name.
     """
-    return parse_original_im_name(osp.basename(im_name), parse_type)
+    return parse_original_market1501_im_name(osp.basename(im_name), parse_type)
+
+def get_im_names(im_dir, pattern='*.jpg', return_np=True, return_path=False):
+    """
+    Get the image names in a dir. Optional to return numpy array, paths.
+    """
+    im_paths = glob.glob(osp.join(im_dir, pattern))
+    im_names = [osp.basename(path) for path in im_paths]
+    ret = im_paths if return_path else im_names
+    if return_np:
+        ret = np.array(ret)
+    return ret
+    
+
+def move_ims(ori_im_paths, new_im_dir, parse_im_name, new_im_name_tmpl):
+    """Rename and move images to new directory."""
+    cnt = defaultdict(int)
+    new_im_names = []
+    for im_path in ori_im_paths:
+        im_name = osp.basename(im_path)
+        id = parse_im_name(im_name, 'id')
+        cam = parse_im_name(im_name, 'cam')
+        cnt[(id, cam)] += 1
+        new_im_name = new_im_name_tmpl.format(id, cam, cnt[(id, cam)] - 1)
+        shutil.copy(im_path, osp.join(new_im_dir, new_im_name))
+        new_im_names.append(new_im_name)
+    return new_im_names
+
 
 
 def partition_train_val_set(im_names, parse_im_name,

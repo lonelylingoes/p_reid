@@ -24,7 +24,8 @@ class Config(object):
     parser.add_argument('--num_models', type=int, default=1)
     parser.add_argument('--set_seed', type=str2bool, default=False)
     parser.add_argument('--dataset', type=str, default='market1501',
-                        choices=['market1501', 'cuhk03', 'duke', 'combined'])
+                    choices=['market1501', 'cuhk03', 'duke', 'combined'])
+    parser.add_argument('--dataset_partitions', type=str, default='/data/DataSet/market1501/partitions.pkl')
     parser.add_argument('--trainset_part', type=str, default='trainval',
                         choices=['trainval', 'train'])
 
@@ -41,7 +42,7 @@ class Config(object):
     parser.add_argument('-lm', '--local_margin', type=float, default=0.3)
     parser.add_argument('-glw', '--g_loss_weight', type=float, default=1.)
     parser.add_argument('-llw', '--l_loss_weight', type=float, default=1.)
-    parser.add_argument('-idlw', '--id_loss_weight', type=float, default=1)
+    parser.add_argument('-idlw', '--id_loss_weight', type=float, default=0)
     parser.add_argument('-pmlw', '--pm_loss_weight', type=float, default=1.)
     parser.add_argument('-gdmlw', '--gdm_loss_weight', type=float, default=1.)
     parser.add_argument('-ldmlw', '--ldm_loss_weight', type=float, default=0.)
@@ -54,12 +55,12 @@ class Config(object):
     parser.add_argument('--base_lr', type=float, default=2e-4)
     parser.add_argument('--lr_decay_type', type=str, default='exp',
                         choices=['exp', 'staircase'])
-    parser.add_argument('--exp_decay_at_epoch', type=int, default=76)
+    parser.add_argument('--exp_decay_at_epoch', type=int, default=151)
     parser.add_argument('--staircase_decay_at_epochs',
                         type=str, default='(101, 201,)')
     parser.add_argument('--staircase_decay_multiply_factor',
                         type=float, default=0.1)
-    parser.add_argument('--total_epochs', type=int, default=150)
+    parser.add_argument('--total_epochs', type=int, default=300)
 
     args = parser.parse_known_args()[0]
 
@@ -76,6 +77,7 @@ class Config(object):
     ###########
     self.workers = 2
     self.dataset = args.dataset
+    self.dataset_partitions = args.dataset_partitions
     self.trainset_part = args.trainset_part
 
     # Image Processing
@@ -113,8 +115,7 @@ class Config(object):
     self.g_loss_weight = args.g_loss_weight
     # local loss weight
     self.l_loss_weight = args.l_loss_weight
-    # global + local loss weight
-    self.g_l_loss_weight = args.g_l_loss_weight
+
 
     ###############
     # Mutual Loss #

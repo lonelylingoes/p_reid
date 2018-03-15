@@ -53,9 +53,9 @@ def main():
 
     # test on test set
     if cfg.only_test:
-        test_loader, _ = create_test_data_loader(cfg)
+        test_loader, _ = create_data_loader(cfg, 'test')
         # create models
-        model = Model(local_conv_out_channels=128)
+        model = Model(local_conv_out_channels=128, pretrained=False)
         # load model param
         model = model_utils.load_test_model(model, cfg)
         # after load model, parallel the model
@@ -70,9 +70,9 @@ def main():
 
 
     # create train data set
-    train_loader, train_dataset = create_train_data_loader(cfg)
+    train_loader, train_dataset = create_data_loader(cfg, 'train')
     # create test data set
-    val_loader,_ = create_val_data_loader(cfg)
+    val_loader,_ = create_data_loader(cfg, 'val')
 
     # create models
     model = Model(local_conv_out_channels=128, 
@@ -141,85 +141,51 @@ def main():
 
 
 
-
-
-def create_train_data_loader(cfg):
+def create_data_loader(cfg, data_type):
     '''
-    create the loader for train
+    create the loader for train/val/test
     args:
         cfg:the object of Config
+        data_type:'train','val','test' to decide the data type
     returns:
-        the data loader of train data
+        the data loader of train/val/test data
     '''
-    train_transform = transforms.Compose(
-                        [transforms.Resize(cfg.im_resize_size),
-                        transforms.RandomCrop(cfg.im_crop_size),
-                        transforms.RandomHorizontalFlip(),
-                        transforms.ToTensor(),
-                        # the object of normalize should be tensor,
-                        # so totensor() should called before normalize()  
-                        transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
-                        )   
-    train_dataset = ReIdDataSet('/data/DataSet/market1501/partitions.pkl',
-                                cfg.trainset_part,
-                                train_transform,
-                                cfg.ids_per_batch,
-                                cfg.ims_per_id)
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=cfg.ids_per_batch,
-        shuffle = True,
-        num_workers=cfg.workers, pin_memory=True)
-    return train_loader, train_dataset
-
-
-
-def create_val_data_loader(cfg):
-    '''
-    create the loader for valiadata
-    args:
-        cfg:the object of Config
-    returns:
-        the data loader of val data
-    '''
-    val_transform = transforms.Compose(
-                    [transforms.Resize(cfg.im_resize_size),
-                    transforms.CenterCrop(cfg.im_crop_size),
-                    transforms.ToTensor(),
-                    # the object of normalize should be tensor,
-                    # so totensor() should called before normalize() 
-                    transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
-                    )
-    val_dataset = ReIdDataSet('/data/DataSet/market1501/partitions.pkl',
-                                'val',
-                                val_transform)
-    val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=cfg.test_batch_size,
-        num_workers=cfg.workers, pin_memory=True)
-    return val_loader, val_dataset
-
-
-def create_test_data_loader(cfg):
-    '''
-    create the loader for test data
-    args:
-        cfg:the object of Config
-    returns:
-        the data loader of test data
-    '''
-    test_transform = transforms.Compose(
+    if data_type == 'train':
+        data_shuffle = True
+        batch_size = cfg.ids_per_batch
+        transform = transforms.Compose(
+                            [transforms.Resize(cfg.im_resize_size),
+                            transforms.RandomCrop(cfg.im_crop_size),
+                            transforms.RandomHorizontalFlip(),
+                            transforms.ToTensor(),
+                            # the object of normalize should be tensor,
+                            # so totensor() should called before normalize()  
+                            transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
+                            ) 
+    else:
+        data_shuffle = False
+        batch_size=cfg.test_batch_size
+        transform = transforms.Compose(
                     [transforms.Resize(cfg.im_crop_size),
                     transforms.ToTensor(),
                     # the object of normalize should be tensor,
                     # so totensor() should called before normalize() 
                     transforms.Normalize(mean=cfg.im_mean, std=cfg.im_std)]
                     )
-    test_dataset = ReIdDataSet('/data/DataSet/market1501/partitions.pkl',
-                                'test',
-                                test_transform)
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=cfg.test_batch_size,
-        num_workers=cfg.workers, pin_memory=True)
-    return test_loader, test_dataset
+
+    dataset = ReIdDataSet(data_type,
+                        cfg,
+                        transform)
+    data_loader = torch.utils.data.DataLoader(
+                        dataset, batch_size=batch_size,
+                        shuffle = data_shuffle,
+                        num_workers=cfg.workers, pin_memory=True)
+
+
+    return data_loader, dataset
+
+
+
 
 
 if __name__ == '__main__':
