@@ -23,6 +23,17 @@ import cv2
 import torch
 from torch.autograd import Variable
 
+
+def time_str(fmt=None):
+  if fmt is None:
+    fmt = '%Y-%m-%d_%H:%M:%S'
+  return datetime.datetime.today().strftime(fmt)
+
+
+def tight_float_str(x, fmt='{:.4f}'):
+  return fmt.format(x).rstrip('0').rstrip('.')
+
+
 def load_pickle(path):
     """
     Check and load pickle object.

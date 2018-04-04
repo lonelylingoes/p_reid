@@ -6,10 +6,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from aligned_reid.utils.utils import load_pickle
-from aligned_reid.utils.utils import time_str
-from aligned_reid.utils.utils import str2bool
-from aligned_reid.utils.utils import tight_float_str as tfs
+import sys
+sys.path.append('../')
+
+from utils.common_utils import load_pickle
+from utils.common_utils import time_str
+from utils.common_utils import str2bool
+from utils.common_utils import tight_float_str as tfs
 
 import numpy as np
 import argparse
@@ -128,7 +131,7 @@ class Config(object):
     self.ldm_loss_weight = args.ldm_loss_weight
 
     self.num_models = args.num_models
-    # See method `set_devices_for_ml` in `aligned_reid/utils/utils.py` for
+    # See method `set_devices_for_ml` in `utils/utils.py` for
     # details.
     assert len(self.sys_device_ids) == self.num_models, \
       'You should specify device for each model.'
