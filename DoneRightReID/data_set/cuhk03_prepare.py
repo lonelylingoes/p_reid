@@ -15,14 +15,14 @@ import numpy as np
 import sys
 sys.path.append('../')
 
-from reid_utils.common_utils import may_make_dir
-from reid_utils.common_utils import load_pickle
-from reid_utils.common_utils import save_pickle
+from utils.common_utils import may_make_dir
+from utils.common_utils import load_pickle
+from utils.common_utils import save_pickle
 
-from reid_utils.dataset_utils import get_im_names
-from reid_utils.dataset_utils import partition_train_val_set
-from reid_utils.dataset_utils import new_im_name_tmpl
-from reid_utils.dataset_utils import parse_original_new_im_name
+from utils.dataset_utils import get_im_names
+from utils.dataset_utils import partition_train_val_set
+from utils.dataset_utils import new_im_name_tmpl
+from utils.dataset_utils import parse_original_new_im_name
 
 
 def save_images(mat_file, save_dir, new_im_name_tmpl):

@@ -16,12 +16,12 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from model.model import Model
-import reid_utils.common_utils as common_utils 
-import reid_utils.model_utils as model_utils
-from reid_utils.model_utils import transer_var_tensor
+import utils.common_utils as common_utils 
+import utils.model_utils as model_utils
+from utils.model_utils import transer_var_tensor
 import  model.loss as loss
-from reid_utils.common_utils import measure_time
-from reid_utils.re_ranking import re_ranking
+from utils.common_utils import measure_time
+from utils.re_ranking import re_ranking
 
 
 

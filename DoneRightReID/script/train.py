@@ -20,14 +20,14 @@ from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import config.config as config
-import reid_utils.common_utils as common_utils 
-import reid_utils.model_utils as model_utils
+import utils.common_utils as common_utils 
+import utils.model_utils as model_utils
 import model.model as model 
 import model.loss as loss
-from reid_utils.model_utils import transer_var_tensor
+from utils.model_utils import transer_var_tensor
 
 
-def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
+def first_stage_train(train_loader, model, loss_dict, optimizer, epoch, cfg):
     '''
     one epoch train function
     args:
@@ -145,6 +145,128 @@ def train(train_loader, model, loss_dict, optimizer, epoch, cfg):
     tensorBoard_log(meter_dict, cfg, epoch, writer=None)
     # save ckpt
     model_utils.save_ckpt(model, optimizer, epoch + 1, cfg.ckpt_file)
+
+
+
+def second_stage_train(train_loader, model, loss_dict, optimizer, epoch, cfg):
+    '''
+    one epoch train function
+    args:
+        train_loader:
+        model: 
+        loss_dict: total_loss dict
+        optimizer: 
+        epoch: current epoch
+        cfg: config
+    '''
+    # switch to train mode
+    model.train()
+
+    meter_dict = dict(
+        g_prec_meter = model_utils.AverageMeter(),
+        g_m_meter = model_utils.AverageMeter(),
+        g_dist_ap_meter = model_utils.AverageMeter(),
+        g_dist_an_meter = model_utils.AverageMeter(),
+        g_loss_meter = model_utils.AverageMeter(),
+        l_prec_meter = model_utils.AverageMeter(),
+        l_m_meter = model_utils.AverageMeter(),
+        l_dist_ap_meter = model_utils.AverageMeter(),
+        l_dist_an_meter = model_utils.AverageMeter(),
+        l_loss_meter = model_utils.AverageMeter(),
+        id_loss_meter = model_utils.AverageMeter(),
+        loss_meter = model_utils.AverageMeter(),)
+
+    epoch_start = time.time()
+    for step, (ims, labels) in enumerate(train_loader):
+        step_start = time.time()
+        # change the shape of ims and labels
+        ims = ims.view(-1, ims.size()[2], ims.size()[3], ims.size()[4])
+        labels = labels.view(-1, )
+
+        ims_var = Variable(transer_var_tensor(ims.float()))
+        labels_t = transer_var_tensor(labels.long())
+        labels_var = Variable(labels_t)
+
+        global_feat, local_feat, logits = model(ims_var)
+
+        # init loss value
+        g_loss = 0
+        l_loss = 0
+        id_loss = 0
+
+
+        # gloabl
+        g_loss, p_inds, n_inds, g_dist_ap, g_dist_an, g_dist_mat = loss.global_loss(
+            loss_dict['g_tri_loss'], global_feat, labels_t,
+            normalize_feature=cfg.normalize_feature)
+
+        if cfg.l_loss_weight == 0:
+            l_loss = 0
+        elif cfg.local_dist_own_hard_sample:
+            # Let local distance find its own hard samples.
+            l_loss, l_dist_ap, l_dist_an, _ = loss.local_loss(
+                loss_dict['l_tri_loss'], local_feat, None, None, labels_t,
+                normalize_feature=cfg.normalize_feature)
+        else:
+            l_loss, l_dist_ap, l_dist_an = loss.local_loss(
+                loss_dict['l_tri_loss'], local_feat, p_inds, n_inds, labels_t,
+                normalize_feature=cfg.normalize_feature)
+            
+        # id loss
+        if cfg.id_loss_weight > 0:
+            id_loss = loss_dict['id_criterion'](logits, labels_var)
+
+        # total loss 
+        total_loss = g_loss * cfg.g_loss_weight \
+                + l_loss * cfg.l_loss_weight \
+                + id_loss * cfg.id_loss_weight 
+
+        optimizer.zero_grad()
+        total_loss.backward()
+        optimizer.step()
+
+        # precision
+        g_prec = (g_dist_an > g_dist_ap).data.float().mean()
+        # the proportion of triplets that satisfy margin
+        g_m = (g_dist_an > g_dist_ap + cfg.global_margin).data.float().mean()
+        g_d_ap = g_dist_ap.data.mean()
+        g_d_an = g_dist_an.data.mean()
+
+        meter_dict['g_prec_meter'].update(g_prec)
+        meter_dict['g_m_meter'].update(g_m)
+        meter_dict['g_dist_ap_meter'].update(g_d_ap)
+        meter_dict['g_dist_an_meter'].update(g_d_an)
+        meter_dict['g_loss_meter'].update(common_utils.to_scalar(g_loss))
+
+        if cfg.l_loss_weight > 0:
+            # precision
+            l_prec = (l_dist_an > l_dist_ap).data.float().mean()
+            # the proportion of triplets that satisfy margin
+            l_m = (l_dist_an > l_dist_ap + cfg.local_margin).data.float().mean()
+            l_d_ap = l_dist_ap.data.mean()
+            l_d_an = l_dist_an.data.mean()
+
+            meter_dict['l_prec_meter'].update(l_prec)
+            meter_dict['l_m_meter'].update(l_m)
+            meter_dict['l_dist_ap_meter'].update(l_d_ap)
+            meter_dict['l_dist_an_meter'].update(l_d_an)
+            meter_dict['l_loss_meter'].update(common_utils.to_scalar(l_loss))
+
+
+        if cfg.id_loss_weight > 0:
+            meter_dict['id_loss_meter'].update(common_utils.to_scalar(id_loss))
+
+        meter_dict['loss_meter'].update(common_utils.to_scalar(total_loss))
+
+        # step log
+        step_log(meter_dict, step_start, cfg, epoch, step)
+    # Epoch Log 
+    epoch_log(meter_dict, epoch_start, cfg, epoch)
+    # tensorboar log
+    tensorBoard_log(meter_dict, cfg, epoch, writer=None)
+    # save ckpt
+    model_utils.save_ckpt(model, optimizer, epoch + 1, cfg.ckpt_file)
+
 
 
 def step_log(meter_dict, step_start, cfg, epoch, step):

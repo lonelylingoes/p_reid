@@ -1,0 +1,24 @@
+cnn resnet101
+
+1.训练分类阶段
+random-sizeed crops and then resize them to 224x224
+
+sgd, momentum=0.9, weight decay=5x10-5, 
+lerning rate = 10-2, 衰减到10-4
+batch_size = 128
+
+随机初始化全连接层，输出2048维
+
+
+2. hard triplet loss 阶段
+‘cut-out’:随机区域添加随机噪声
+保持宽高比，缩放最大尺寸的边到416
+batch_size = 64
+sgd  learing rate=10-3 对数率衰减，每512个迭代减少一半， 大约4096次迭代模型收敛。
+
+hard triplet mining:
+m=0.1
+首先，随机选N个样本用当前模型提取特征；然后，为了选择triplets,随机选取一个图片作为query,然后从最大的25个triplet loss中随机选择一个。（计算量狂大的感觉。）
+为了加速训练过程，并不是每次迭代后都进行随机采样提取特征，而是在模型更新K次之后再做这个事。
+
+

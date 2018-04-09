@@ -17,14 +17,14 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 import torch.optim as optim
-import reid_utils.common_utils as common_utils 
-from reid_utils.common_utils import measure_time
-import reid_utils.model_utils as model_utils
+import utils.common_utils as common_utils 
+from utils.common_utils import measure_time
+import utils.model_utils as model_utils
 import model.model as model 
-import reid_utils.model_utils as model_utils
-from reid_utils.model_utils import transer_var_tensor
-from reid_utils.re_ranking import re_ranking
-from reid_utils.metric import cmc, mean_ap
+import utils.model_utils as model_utils
+from utils.model_utils import transer_var_tensor
+from utils.re_ranking import re_ranking
+from utils.metric import cmc, mean_ap
 import  model.loss as loss
 
 

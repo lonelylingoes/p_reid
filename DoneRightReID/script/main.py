@@ -15,14 +15,14 @@ from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import config.config as config
-import reid_utils.common_utils as common_utils 
-import reid_utils.model_utils as model_utils
+import utils.common_utils as common_utils 
+import utils.model_utils as model_utils
 from data_set.data_set import ReIdDataSet
-from model.model import Model
+from model.model import FirstStageModel, Model
 from train import train
 from test import test
 from model.loss import TripletLoss
-from torch.reid_utils.data import DataLoader
+from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 
 
@@ -50,7 +50,6 @@ def main():
     pprint.pprint(cfg.__dict__)
     print('-' * 60)
     
-
     # test on test set
     if cfg.only_test:
         test_loader, _ = create_data_loader(cfg, 'test')
@@ -68,15 +67,14 @@ def main():
         test(test_loader, model, cfg)
         return
 
+    ############# first stage #############
 
     # create train data set
     train_loader, train_dataset = create_data_loader(cfg, 'train')
     # create test data set
     val_loader,_ = create_data_loader(cfg, 'val')
-
-    # create models
-    model = Model(local_conv_out_channels=128, 
-                  num_classes=len(train_dataset.ids2labels))
+    # create model
+    model = FirstStageModel(num_classes=len(train_dataset.ids2labels))
 
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs for tain!")
@@ -84,13 +82,9 @@ def main():
     if torch.cuda.is_available():
         model.cuda()
 
-
     # define loss
-    loss_dict =dict(id_criterion = nn.CrossEntropyLoss().cuda() \
-                    if torch.cuda.is_available() else nn.CrossEntropyLoss(),
-        g_tri_loss = TripletLoss(margin=cfg.global_margin),
-        l_tri_loss = TripletLoss(margin=cfg.local_margin),
-        g_l_tri_loss = TripletLoss(margin=cfg.local_margin + cfg.global_margin))
+    id_criterion = nn.CrossEntropyLoss().cuda() 
+
 
 
     # [NOTE] 
@@ -140,10 +134,13 @@ def main():
         test(val_loader, model, cfg)
 
 
+    ############# second stage #############
+    g_tri_loss = TripletLoss(margin=cfg.global_margin),
 
 def create_data_loader(cfg, data_type):
     '''
-    create the loader for train/val/test
+    create the loader for train/val/test, 
+    create data loader for the first stage.
     args:
         cfg:the object of Config
         data_type:'train','val','test' to decide the data type
@@ -152,10 +149,10 @@ def create_data_loader(cfg, data_type):
     '''
     if data_type == 'train':
         data_shuffle = True
-        batch_size = cfg.ids_per_batch
+        batch_size = cfg.first_stage_batch_size
         transform = transforms.Compose(
-                            [transforms.Resize(cfg.im_resize_size),
-                            transforms.RandomCrop(cfg.im_crop_size),
+                            [transforms.Resize(cfg.first_resize_size),
+                            transforms.RandomCrop(cfg.first_crop_size),
                             transforms.RandomHorizontalFlip(),
                             transforms.ToTensor(),
                             # the object of normalize should be tensor,
@@ -166,7 +163,7 @@ def create_data_loader(cfg, data_type):
         data_shuffle = False
         batch_size=cfg.test_batch_size
         transform = transforms.Compose(
-                    [transforms.Resize(cfg.im_crop_size),
+                    [transforms.Resize(cfg.first_crop_size),
                     transforms.ToTensor(),
                     # the object of normalize should be tensor,
                     # so totensor() should called before normalize() 

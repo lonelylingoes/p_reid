@@ -9,10 +9,10 @@ from __future__ import print_function
 import sys
 sys.path.append('../')
 
-from utils.common_utils import load_pickle
-from utils.common_utils import time_str
-from utils.common_utils import str2bool
-from utils.common_utils import tight_float_str as tfs
+from reid_utils.common_utils import load_pickle
+from reid_utils.common_utils import time_str
+from reid_utils.common_utils import str2bool
+from reid_utils.common_utils import tight_float_str as tfs
 
 import numpy as np
 import argparse
@@ -131,7 +131,7 @@ class Config(object):
     self.ldm_loss_weight = args.ldm_loss_weight
 
     self.num_models = args.num_models
-    # See method `set_devices_for_ml` in `utils/utils.py` for
+    # See method `set_devices_for_ml` in `reid_utils/reid_utils.py` for
     # details.
     assert len(self.sys_device_ids) == self.num_models, \
       'You should specify device for each model.'

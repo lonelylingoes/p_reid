@@ -12,13 +12,13 @@ import numpy as np
 import sys
 sys.path.append('../')
 
-from reid_utils.common_utils import may_make_dir
-from reid_utils.common_utils import save_pickle
+from utils.common_utils import may_make_dir
+from utils.common_utils import save_pickle
 
-from reid_utils.dataset_utils import get_im_names
-from reid_utils.dataset_utils import partition_train_val_set
-from reid_utils.dataset_utils import parse_original_duke_im_name
-from reid_utils.dataset_utils import parse_full_path_duke_im_name
+from utils.dataset_utils import get_im_names
+from utils.dataset_utils import partition_train_val_set
+from utils.dataset_utils import parse_original_duke_im_name
+from utils.dataset_utils import parse_full_path_duke_im_name
 
 def get_images_split(zip_file, save_dir=None):
     """Rename and move all used images to a directory."""

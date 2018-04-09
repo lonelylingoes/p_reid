@@ -16,10 +16,10 @@ import torchvision.transforms as transforms
 
 import random
 import numpy as np
-from reid_utils.common_utils import load_pickle
-from reid_utils.dataset_utils import parse_full_path_market1501_im_name
-from reid_utils.dataset_utils import parse_full_path_duke_im_name
-from reid_utils.dataset_utils import parse_full_path_new_im_name
+from utils.common_utils import load_pickle
+from utils.dataset_utils import parse_full_path_market1501_im_name
+from utils.dataset_utils import parse_full_path_duke_im_name
+from utils.dataset_utils import parse_full_path_new_im_name
 from collections import defaultdict
 from PIL import Image
 

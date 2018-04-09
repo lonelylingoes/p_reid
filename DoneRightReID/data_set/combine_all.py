@@ -17,14 +17,14 @@ import shutil
 import sys
 sys.path.append('../')
 
-from reid_utils.common_utils import may_make_dir
-from reid_utils.common_utils import save_pickle
-from reid_utils.common_utils import load_pickle
+from utils.common_utils import may_make_dir
+from utils.common_utils import save_pickle
+from utils.common_utils import load_pickle
 
-from reid_utils.dataset_utils import new_im_name_tmpl
-from reid_utils.dataset_utils import parse_original_new_im_name
-from reid_utils.dataset_utils import parse_original_duke_im_name
-from reid_utils.dataset_utils import parse_original_market1501_im_name
+from utils.dataset_utils import new_im_name_tmpl
+from utils.dataset_utils import parse_original_new_im_name
+from utils.dataset_utils import parse_original_duke_im_name
+from utils.dataset_utils import parse_original_market1501_im_name
 
 
 def move_ims(
