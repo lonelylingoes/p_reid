@@ -7,7 +7,6 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
-sys.path.append('../')
 
 
 import os
@@ -15,13 +14,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from model.model import Model
-import reid_utils.common_utils as common_utils 
-import reid_utils.model_utils as model_utils
-from reid_utils.model_utils import transer_var_tensor
-import  model.loss as loss
-from reid_utils.common_utils import measure_time
-from reid_utils.re_ranking import re_ranking
+from AlignedReID.model.model import Model
+import AlignedReID.reid_utils.common_utils as common_utils 
+import AlignedReID.reid_utils.model_utils as model_utils
+from AlignedReID.reid_utils.model_utils import transer_var_tensor
+import  AlignedReID.model.loss as loss
+from AlignedReID.reid_utils.common_utils import measure_time
+from AlignedReID.reid_utils.re_ranking import re_ranking
 
 
 
@@ -41,6 +40,7 @@ def low_memory_local_dist(x, y):
     return z
 
 
+
 class ReId(object):
     '''
     the class is created for deloy purpose.
@@ -48,7 +48,7 @@ class ReId(object):
     
     def __init__(self, 
                 model_path,
-                device_id = 0):
+                device_id = -1):
         '''
         args:
             model_path: the model file path
@@ -71,7 +71,6 @@ class ReId(object):
         if torch.cuda.is_available():
             self.model.cuda()
     
-
     def __parse_image_name__(self, image_name):
         '''
         parse the image name to mark, person id, camera id, scene id, 
@@ -84,13 +83,12 @@ class ReId(object):
         scene_id = int(image_name[10])
         return mark, person_id, camera_id, scene_id
 
-
     def __get_threshold__(self,
-                         to_re_rank,
+                        to_re_rank,
                         use_local_distance,
                         normalize_feature):
         if to_re_rank:
-            threshold = 0.3
+            threshold = 0.16
         elif normalize_feature:
             if use_local_distance:
                 threshold = 6
@@ -98,10 +96,105 @@ class ReId(object):
                 threshold = 1.5   
         else:
             if use_local_distance:
-                threshold = 20
+                threshold = 15
             else:
-                threshold = 24
+                threshold = 1.65
         return threshold
+
+    def extract_features(self, pictures):
+        '''
+        only extract global features.
+        args:
+            pictures: the image array list
+        returns:
+            features: the features vector extracted by the model, the shape is (n,c)
+        '''
+        pictures = [common_utils.pre_process_im(picture, (256, 128)) for picture in pictures]
+        pictures = np.array(pictures)
+        ims_var = Variable(transer_var_tensor(torch.from_numpy(pictures), self.device_id).float(), volatile=True)
+        global_feats, local_feats = self.model(ims_var)[:2]
+        global_feats = global_feats.data.cpu().numpy()
+        return global_feats
+
+    def association_judge(self, 
+                        unconfirmed_persons,
+                        confirmed_persons,
+                        confirmed_strategy = 'average',
+                        to_re_rank=False):
+        '''
+        judge the association between unconfirmed and confirmed person.
+        the memory out problem was not conserdered.
+        args:
+            unconfirmed_persons: confirmed persons list
+            confirmed_persons: unconfirmed persons list
+            confirmed_strategy: value in 'average', 'max', 'min', or just number like '1', '2'...
+            to_re_rank: whether use re_rank
+        returns: list of person number, if not found the value is -1.
+        '''
+        if len(confirmed_persons) == 0:
+            return [-1 for i in unconfirmed_persons]
+
+        q_feats = np.array([person.get_last_feature() for person in unconfirmed_persons])
+        # get gallery features, person numbers and different person indexes list.
+        g_feats = []
+        index = 0
+        index_list = [index]
+        person_numbers = []
+        for person in confirmed_persons:
+            person_numbers.append(person.get_person_number())
+            cache_len = person.get_cache_len()
+            index += cache_len
+            index_list.append(index)
+            cache_info = person.get_info()
+            for i in range(cache_len):
+                g_feats.append(cache_info[i][1])
+        g_feats = np.array(g_feats)
+
+        # compute distance
+        q_g_dist = loss.compute_dist_np(q_feats, g_feats, type='euclidean')
+        compact_q_g_dist = self.__compact_dist(q_g_dist, index_list, confirmed_strategy)
+        # if found, fill the id else fill -1
+        found_ids = []
+        # the numberof query is m, the number of gallery is n
+        m, n = compact_q_g_dist.shape
+        # the threshold decides whether same
+        threshold = self.__get_threshold__(to_re_rank, False, False)
+        # sort and find correct matches
+        indexs = np.argmin(compact_q_g_dist, axis=1)
+        sorted_dis = np.sort(compact_q_g_dist, axis =1)
+
+        # judge for every query
+        for i in range(m):
+            # for query i, in the gallery set, the shortest distance is less than the threshold
+            if sorted_dis[i][0] < threshold:
+                found_ids.append(confirmed_persons[indexs[i]].get_person_number())
+            else:
+                found_ids.append(-1)
+
+        found_ids = self.__remvoe_overlap__(sorted_dis[:,0], found_ids)
+        return found_ids
+
+    
+    def __compact_dist(self, g_q_dist, index_list, compact_strategy):
+        '''
+        compact the distance matrix by the pointed strategy.
+        args:
+            g_q_dist: orinal matrix.
+            index_list: the index partion list.
+            compact_strategy: 'average', 'max', 'min',
+        '''
+        compact_q_g_dist = np.zeros((g_q_dist.shape[0], len(index_list)-1))
+        for i in range(len(index_list) - 1):
+            if compact_strategy == 'average':
+                    compact_q_g_dist[:,i] = np.mean(g_q_dist[:,index_list[i]:index_list[i+1]], axis=1)
+            elif compact_strategy == 'min':
+                    compact_q_g_dist[:,i] = np.min(g_q_dist[:,index_list[i]:index_list[i+1]], axis=1)
+            elif compact_strategy == 'max':
+                    compact_q_g_dist[:,i] = np.max(g_q_dist[:,index_list[i]:index_list[i+1]], axis=1)
+            else:
+                compact_q_g_dist[:,i] = np.mean(g_q_dist[:,index_list[i]:index_list[i+1]], axis=1)
+
+        return compact_q_g_dist
 
 
     def decide(self, 
@@ -110,7 +203,7 @@ class ReId(object):
                 use_local_distance=False,
                 normalize_feature = False):
         '''
-        get the result
+        judge the querys wether asoociate with the gallerys which are fixed person pictures
         args:
             images_path: the path of images
             to_re_rank: whether use re_rank
@@ -151,7 +244,6 @@ class ReId(object):
         found_ids = self.__remvoe_overlap__(sorted_dis[:,0], found_ids)
         return found_ids
 
-
     def __remvoe_overlap__(self, sorted_dis_vect, found_ids):
         '''
         for every query remove the overlap gallery id by compare the distances
@@ -173,7 +265,6 @@ class ReId(object):
                         continue
                     found_ids[index[i][0]] = -1
         return found_ids
-
 
     def __get_images_info__(self, images_path):
         '''
@@ -201,8 +292,6 @@ class ReId(object):
         scene_ids = np.array(scene_ids)
 
         return images, marks, person_ids, camera_ids, scene_ids
-
-
 
     def __compute_distance_mat__(self, 
                             images,

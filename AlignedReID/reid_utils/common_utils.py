@@ -230,12 +230,16 @@ def pre_process_im(im_path,
     """
     Pre-process image.
     args:
+        im_path: image path or im array
         resize_size: (height, width)
         im_mean: the mean of the image
         im_std: the std of the image
         batch_dims: indicate wether 'NCHW' or 'NHWC'
     """
-    im = cv2.imread(im_path)
+    if type(im_path) == str:
+        im = cv2.imread(im_path)
+    else:
+        im = im_path
     im = im[:,:,[2,1,0]]
     # Resize.
     if resize_size is not None:

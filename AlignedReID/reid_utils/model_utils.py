@@ -18,7 +18,7 @@ from scipy import io
 import datetime
 import time
 from contextlib import contextmanager
-import utils.common_utils as common_utils 
+import reid_utils.common_utils as common_utils 
 
 import torch
 from torch.autograd import Variable
