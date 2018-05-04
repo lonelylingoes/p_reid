@@ -70,7 +70,7 @@ def main():
 
 
     # create train data set
-    train_loader, train_dataset = create_data_loader(cfg, 'train')
+    train_loader, train_dataset = create_data_loader(cfg, cfg.trainset_part)
     # create test data set
     val_loader,_ = create_data_loader(cfg, 'val')
 
@@ -150,7 +150,7 @@ def create_data_loader(cfg, data_type):
     returns:
         the data loader of train/val/test data
     '''
-    if data_type == 'train':
+    if data_type == 'train' or data_type == 'trainval' :
         data_shuffle = True
         batch_size = cfg.ids_per_batch
         transform = transforms.Compose(
