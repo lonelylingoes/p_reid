@@ -23,7 +23,7 @@ class Config(object):
   def __init__(self):
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--sys_device_ids', type=eval, default=((0,),))
+    parser.add_argument('-d', '--sys_device_ids', type=eval, default=(0,),)
     parser.add_argument('--num_models', type=int, default=1)
     parser.add_argument('--set_seed', type=str2bool, default=False)
     parser.add_argument('--dataset', type=str, default='market1501',

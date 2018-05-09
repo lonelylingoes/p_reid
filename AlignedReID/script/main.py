@@ -32,7 +32,7 @@ def main():
     cfg = config.Config()
 
     # set cpu or gpus which will be used
-    #common_utils.set_devices(cfg.sys_device_ids)
+    common_utils.set_devices(cfg.sys_device_ids)
 
     # set seed for all possibale moudel
     if cfg.seed is not None:
