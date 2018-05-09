@@ -98,5 +98,5 @@ On Market1501 with setting
 
 |   | Rank-1 (%) | mAP ( %) | Rank-1 (%) after Re-ranking | mAP (%) after Re-ranking |
 | --- | :---: | :---: | :---: | :---: |
-| global + local loss | 88.54 | 73.62 | 90.68 | 86.63 |
-| global + local + identify loss | 85.84 | 68.85 | 87.56 | 81.35 |
+| train with global + local loss/test with global distance | 88.54 | 73.62 | 90.68 | 86.63 |
+| train with global + local + identify loss/test with global distance | 85.84 | 68.85 | 87.56 | 81.35 |
