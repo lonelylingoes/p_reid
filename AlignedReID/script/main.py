@@ -231,13 +231,13 @@ def create_data_loader(cfg, data_type):
         # ensure the random area's height is less than 1/3 of orinal area's.
         h1 = int(h/3)
         h2 = int(h * 2/3)
-        random_h1 = random.sample(range(h),1)
+        random_h1 = random.sample(range(h),1)[0]
         if random_h1 < h1:
-            random_h2 = random.sample(range(random_h1 + h1),1)
+            random_h2 = random.sample(range(random_h1 + h1),1)[0]
         elif random_h1 >= h1 and random_h1 < h2:
-            random_h2 = random.sample(range(random_h1 - h1, random_h1 + h1),1)
+            random_h2 = random.sample(range(random_h1 - h1, random_h1 + h1),1)[0]
         else:
-            random_h2 = random.sample(range(random_h1 - h1, h),1)
+            random_h2 = random.sample(range(random_h1 - h1, h),1)[0]
         random_h = [random_h1, random_h2]
         random_h.sort()
 

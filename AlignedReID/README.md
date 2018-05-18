@@ -31,7 +31,8 @@ train the single model on market1501 from scratch with global and local loss use
 cd AlignedReID/script
 
 python train.py \
---dataset market1501 \
+--train_dataset market1501 \
+--train_partitons /data/DataSet/market1501/partitions.pkl \
 --ids_per_batch 32 \
 --ims_per_id 4 \
 --normalize_feature false \
@@ -52,7 +53,8 @@ cd AlignedReID/script
 
 python train.py \
 --resume True
---dataset market1501 \
+--train_dataset market1501 \
+--train_partitons /data/DataSet/market1501/partitions.pkl \
 --ids_per_batch 32 \
 --ims_per_id 4 \
 --normalize_feature false \
@@ -76,7 +78,9 @@ cd AlignedReID/script
 python test.py \
 --onlytest True \
 --to_re_rank True \
---dataset market1501 \
+--train_dataset market1501 \
+--test_dataset market1501 \
+--test_partitons /data/DataSet/market1501/partitions.pkl \
 ```
 if you want to test on other dataset, use this script.
 
@@ -86,8 +90,9 @@ cd AlignedReID/script
 python test.py \
 --onlytest True \
 --to_re_rank True \
---dataset duke \
---dataset_partitions /data/DataSet/duke/partitions.pkl
+--train_dataset market1501 \
+--test_dataset duke \
+--test_dataset_partitions /data/DataSet/duke/partitions.pkl
 ```
 
 ## results

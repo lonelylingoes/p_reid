@@ -39,18 +39,18 @@ class ReIdDataSet(Dataset):
             transform: transform object collection
         '''
         assert data_type in ['trainval', 'train', 'val', 'test']
-        partition = load_pickle(ospeu(cfg.dataset_partitions))
-
-        if  cfg.dataset == 'market1501':
-            self.parse_full_path_im_name = parse_full_path_market1501_im_name
-        elif cfg.dataset == 'duke':
-            self.parse_full_path_im_name = parse_full_path_duke_im_name
-        elif cfg.dataset == 'cuhk03':
-            self.parse_full_path_im_name =  parse_full_path_new_im_name
-        elif cfg.dataset == 'combine':
-            pass
 
         if data_type == 'trainval':
+            partition = load_pickle(ospeu(cfg.train_dataset_partitions))
+            if  cfg.train_dataset == 'market1501':
+                self.parse_full_path_im_name = parse_full_path_market1501_im_name
+            elif cfg.train_dataset == 'duke':
+                self.parse_full_path_im_name = parse_full_path_duke_im_name
+            elif cfg.train_dataset == 'cuhk03':
+                self.parse_full_path_im_name =  parse_full_path_new_im_name
+            elif cfg.train_dataset == 'combine':
+                pass
+
             self.ims_per_id = cfg.ims_per_id
             self.ims_names = partition['trainval_im_names']
             self.ids2labels = partition['trainval_ids2labels']
@@ -62,6 +62,16 @@ class ReIdDataSet(Dataset):
             # id list
             self.ids = self.ids_to_im_indexs.keys()
         elif data_type == 'train':
+            partition = load_pickle(ospeu(cfg.train_dataset_partitions))
+            if  cfg.train_dataset == 'market1501':
+                self.parse_full_path_im_name = parse_full_path_market1501_im_name
+            elif cfg.train_dataset == 'duke':
+                self.parse_full_path_im_name = parse_full_path_duke_im_name
+            elif cfg.train_dataset == 'cuhk03':
+                self.parse_full_path_im_name =  parse_full_path_new_im_name
+            elif cfg.train_dataset == 'combine':
+                pass
+
             self.ims_per_id = cfg.ims_per_id
             self.ims_names = partition['train_im_names']
             self.ids2labels = partition['train_ids2labels']
@@ -73,9 +83,29 @@ class ReIdDataSet(Dataset):
             # id list
             self.ids = self.ids_to_im_indexs.keys()
         elif data_type == 'val':
+            partition = load_pickle(ospeu(cfg.test_dataset_partitions))
+            if  cfg.train_dataset == 'market1501':
+                self.parse_full_path_im_name = parse_full_path_market1501_im_name
+            elif cfg.train_dataset == 'duke':
+                self.parse_full_path_im_name = parse_full_path_duke_im_name
+            elif cfg.train_dataset == 'cuhk03':
+                self.parse_full_path_im_name =  parse_full_path_new_im_name
+            elif cfg.train_dataset == 'combine':
+                pass
+
             self.ims_names = partition['val_im_names']
             self.marks = partition['val_marks']
         elif data_type == 'test':
+            partition = load_pickle(ospeu(cfg.test_dataset_partitions))
+            if  cfg.train_dataset == 'market1501':
+                self.parse_full_path_im_name = parse_full_path_market1501_im_name
+            elif cfg.train_dataset == 'duke':
+                self.parse_full_path_im_name = parse_full_path_duke_im_name
+            elif cfg.train_dataset == 'cuhk03':
+                self.parse_full_path_im_name =  parse_full_path_new_im_name
+            elif cfg.train_dataset == 'combine':
+                pass
+
             self.ims_names = partition['test_im_names']
             self.marks = partition['test_marks']
         else:

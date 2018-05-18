@@ -23,12 +23,14 @@ class Config(object):
   def __init__(self):
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--sys_device_ids', type=eval, default=(0,),)
+    parser.add_argument('-d', '--sys_device_ids', type=eval, default=(0,1,2,3,),)
     parser.add_argument('--num_models', type=int, default=1)
     parser.add_argument('--set_seed', type=str2bool, default=False)
-    parser.add_argument('--dataset', type=str, default='market1501',
+    parser.add_argument('--train_dataset', type=str, default='market1501',
                     choices=['market1501', 'cuhk03', 'duke', 'combined'])
-    parser.add_argument('--dataset_partitions', type=str, default='/data/DataSet/market1501/partitions.pkl')
+    parser.add_argument('--test_dataset', type=str, default='')
+    parser.add_argument('--train_dataset_partitions', type=str, default='/data/DataSet/market1501/partitions.pkl')
+    parser.add_argument('--test_dataset_partitions', type=str, default='')
     parser.add_argument('--trainset_part', type=str, default='trainval',
                         choices=['trainval', 'train'])
 
@@ -79,8 +81,16 @@ class Config(object):
     # Dataset #
     ###########
     self.workers = 2
-    self.dataset = args.dataset
-    self.dataset_partitions = args.dataset_partitions
+    self.train_dataset = args.train_dataset
+    if args.test_dataset == '':
+      self.test_dataset = self.train_dataset
+    else:
+      self.test_dataset = args.test_dataset
+    self.train_dataset_partitions = args.train_dataset_partitions
+    if args.test_dataset_partitions == '':
+      self.test_dataset_partitions = self.train_dataset_partitions
+    else:
+      self.test_dataset_partitions = args.test_dataset_partitions
     self.trainset_part = args.trainset_part
 
     # Image Processing
@@ -135,8 +145,10 @@ class Config(object):
     self.num_models = args.num_models
     # See method `set_devices_for_ml` in `reid_utils/reid_utils.py` for
     # details.
+    '''
     assert len(self.sys_device_ids) == self.num_models, \
       'You should specify device for each model.'
+    '''
 
     # Currently one model occupying multiple GPUs is not allowed.
     if self.num_models > 1:
@@ -183,7 +195,7 @@ class Config(object):
     if args.exp_dir == '':
       self.exp_dir = osp.join(
         '../ckpt_dir',
-        '{}'.format(self.dataset),
+        '{}'.format(self.train_dataset),
         'train',
         #
         ('nf_' if self.normalize_feature else 'not_nf_') +
