@@ -9,6 +9,11 @@ from __future__ import print_function
 import sys
 sys.path.append('../')
 
+
+from PIL import Image
+import random
+import numpy as np
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -22,7 +27,7 @@ from model.model import Model
 from train import train
 from test import test
 from model.loss import TripletLoss
-from torch.reid_utils.data import DataLoader
+from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 
 
@@ -150,12 +155,113 @@ def create_data_loader(cfg, data_type):
     returns:
         the data loader of train/val/test data
     '''
+    def resize(img, size, interpolation=Image.BILINEAR):
+        """Resize the input PIL Image to the given size.
+        Args:
+            img (PIL Image): Image to be resized.
+            size (sequence or int): Desired output size. If size is a sequence like
+                (h, w), the output size will be matched to this. If size is an int,
+                the smaller edge of the image will be matched to this number maintaing
+                the aspect ratio. i.e, if height > width, then image will be rescaled to
+                (size * height / width, size)
+            interpolation (int, optional): Desired interpolation. Default is
+                ``PIL.Image.BILINEAR``
+        Returns:
+            PIL Image: Resized image.
+        """
+        import collections
+
+        if not isinstance(img, Image.Image):
+            raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+        if not (isinstance(size, int) or (isinstance(size, collections.Iterable) and len(size) == 2)):
+            raise TypeError('Got inappropriate size arg: {}'.format(size))
+
+        if isinstance(size, int):
+            w, h = img.size
+            if (w <= h and w == size) or (h <= w and h == size):
+                return img
+            if w < h:
+                ow = size
+                oh = int(size * h / w)
+                return img.resize((ow, oh), interpolation)
+            else:
+                oh = size
+                ow = int(size * w / h)
+                return img.resize((ow, oh), interpolation)
+        else:
+            return img.resize(size[::-1], interpolation)
+
+
+    class keepRatioResize(object):
+        """keep the height and weight's ratio and resize the input PIL Image to the given size.
+
+        Args:
+            size (int): Desired output size. size is an int,
+                bigger edge of the image will be matched to this number.
+                i.e, if height > width, then image will be rescaled to
+                (size, size * width / height)
+            interpolation (int, optional): Desired interpolation. Default is
+                ``PIL.Image.BILINEAR``
+        """
+
+        def __init__(self, size, interpolation=Image.BILINEAR):
+            assert isinstance(size, int)
+            self.size = size
+            self.interpolation = interpolation
+
+        def __call__(self, img):
+            """
+            Args:
+                img (PIL Image): Image to be scaled.
+
+            Returns:
+                PIL Image: Rescaled image.
+            """
+            h,w = img.height, img.width
+            size = (self.size, int(w/h * self.size)) if h > w  else (int(h/w * self.size), self.size)
+            return resize(img, size, self.interpolation)
+
+    def img_cut_out(img):
+        '''
+        add radom noise to random area.
+         Args:
+                img (PIL Image): Image to be ''cut-out''.
+        '''
+        h,w = img.height, img.width
+        # ensure the random area's height is less than 1/3 of orinal area's.
+        h1 = int(h/3)
+        h2 = int(h * 2/3)
+        random_h1 = random.sample(range(h),1)
+        if random_h1 < h1:
+            random_h2 = random.sample(range(random_h1 + h1),1)
+        elif random_h1 >= h1 and random_h1 < h2:
+            random_h2 = random.sample(range(random_h1 - h1, random_h1 + h1),1)
+        else:
+            random_h2 = random.sample(range(random_h1 - h1, h),1)
+        random_h = [random_h1, random_h2]
+        random_h.sort()
+
+        random_w = random.sample(range(w),2)
+        random_w.sort()
+        img_array = np.asarray(img)
+        img_array.flags.writeable = True
+        img_array[random_h[0]:random_h[1], random_w[0]:random_w[1], :] \
+            = np.random.randint(0,255,size=(random_h[1]-random_h[0], random_w[1]-random_w[0], 3))
+        img = Image.fromarray(np.uint8(img_array))
+        return img
+
+
+
     if data_type == 'train' or data_type == 'trainval' :
         data_shuffle = True
         batch_size = cfg.ids_per_batch
         transform = transforms.Compose(
-                            [transforms.Resize(cfg.im_resize_size),
-                            transforms.RandomCrop(cfg.im_crop_size),
+                            [
+                            transforms.Lambda(img_cut_out),
+                            keepRatioResize(cfg.keep_ratio_size),
+                            #transforms.Resize(cfg.im_resize_size),
+                            #transforms.RandomCrop(cfg.im_crop_size),
+                            #transforms.RandomRotation(cfg.random_rotation_degree),
                             transforms.RandomHorizontalFlip(),
                             transforms.ToTensor(),
                             # the object of normalize should be tensor,
@@ -166,7 +272,9 @@ def create_data_loader(cfg, data_type):
         data_shuffle = False
         batch_size=cfg.test_batch_size
         transform = transforms.Compose(
-                    [transforms.Resize(cfg.im_crop_size),
+                    [
+                    #transforms.Resize(cfg.im_crop_size),
+                    keepRatioResize(cfg.keep_ratio_size),
                     transforms.ToTensor(),
                     # the object of normalize should be tensor,
                     # so totensor() should called before normalize() 

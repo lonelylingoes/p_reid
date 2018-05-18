@@ -87,6 +87,8 @@ class Config(object):
     # (height, width)
     self.im_resize_size = (256, 128)
     self.im_crop_size = (256, 128)
+    self.keep_ratio_size = 416# the bigger side
+    self.random_rotation_degree = 30
     # will scale by 1/255
     self.im_mean = [0.485, 0.456, 0.406]
     #mean=[0.485, 0.456, 0.406]
