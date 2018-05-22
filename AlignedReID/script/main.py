@@ -141,7 +141,7 @@ def main():
 
         # train for one epoch
         train(train_loader, model, loss_dict, optimizer, epoch, cfg)
-        if epoch % cfg.val_at_epoch == 0:
+        if (epoch+1) % cfg.val_at_epoch == 0:
             # validata for one epoch
             test(val_loader, model, cfg)
 
