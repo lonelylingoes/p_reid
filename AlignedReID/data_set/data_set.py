@@ -97,13 +97,13 @@ class ReIdDataSet(Dataset):
             self.marks = partition['val_marks']
         elif data_type == 'test':
             partition = load_pickle(ospeu(cfg.test_dataset_partitions))
-            if  cfg.train_dataset == 'market1501':
+            if  cfg.test_dataset == 'market1501':
                 self.parse_full_path_im_name = parse_full_path_market1501_im_name
-            elif cfg.train_dataset == 'duke':
+            elif cfg.test_dataset == 'duke':
                 self.parse_full_path_im_name = parse_full_path_duke_im_name
-            elif cfg.train_dataset == 'cuhk03':
+            elif cfg.test_dataset == 'cuhk03':
                 self.parse_full_path_im_name =  parse_full_path_new_im_name
-            elif cfg.train_dataset == 'combine':
+            elif cfg.test_dataset == 'combine':
                 pass
 
             self.ims_names = partition['test_im_names']

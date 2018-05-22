@@ -32,7 +32,7 @@ cd AlignedReID/script
 
 python train.py \
 --train_dataset market1501 \
---train_partitons /data/DataSet/market1501/partitions.pkl \
+--train_dataset_partitons /data/DataSet/market1501/partitions.pkl \
 --ids_per_batch 32 \
 --ims_per_id 4 \
 --normalize_feature false \
@@ -54,7 +54,7 @@ cd AlignedReID/script
 python train.py \
 --resume True
 --train_dataset market1501 \
---train_partitons /data/DataSet/market1501/partitions.pkl \
+--train_dataset_partitons /data/DataSet/market1501/partitions.pkl \
 --ids_per_batch 32 \
 --ims_per_id 4 \
 --normalize_feature false \
@@ -79,8 +79,9 @@ python test.py \
 --onlytest True \
 --to_re_rank True \
 --train_dataset market1501 \
+--train_dataset_partitons /data/DataSet/market1501/partitions.pkl \
 --test_dataset market1501 \
---test_partitons /data/DataSet/market1501/partitions.pkl \
+--test_dataset_partitons /data/DataSet/market1501/partitions.pkl 
 ```
 if you want to test on other dataset, use this script.
 
@@ -90,9 +91,10 @@ cd AlignedReID/script
 python test.py \
 --onlytest True \
 --to_re_rank True \
---train_dataset market1501 \
+--train_dataset_dataset market1501 \
+--train_dataset_partitons /data/DataSet/market1501/partitions.pkl \
 --test_dataset duke \
---test_dataset_partitions /data/DataSet/duke/partitions.pkl
+--test_dataset_dataset_partitions /data/DataSet/duke/partitions.pkl
 ```
 
 ## results
@@ -106,9 +108,4 @@ On Market1501 with setting
 | train with global + local loss/test with global distance | 88.54 | 73.62 | 90.68 | 86.63 |
 | train with global + local + identify loss/test with global distance | 85.84 | 68.85 | 87.56 | 81.35 |
 
-## further sesults
-Use some advices from 'Re-ID done right：towards good practices for person re-identification', the finnal results is:
 
-|   | Rank-1 (%) | mAP ( %) | Rank-1 (%) after Re-ranking | mAP (%) after Re-ranking |
-| --- | :---: | :---: | :---: | :---: |
-| train with global + local loss/test with global distance | 91.09 | 78.17 | 92.73 | 89.82 |
