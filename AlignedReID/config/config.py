@@ -110,7 +110,8 @@ class Config(object):
     self.ims_per_id = args.ims_per_id
 
     self.test_batch_size = 32
-
+    self.val_at_epoch = 20
+    
     ###############
     # ReID Model  #
     ###############
