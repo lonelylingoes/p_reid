@@ -32,7 +32,7 @@ cd AlignedReID/script
 
 python train.py \
 --train_dataset market1501 \
---train_dataset_partitons /data/DataSet/market1501/partitions.pkl \
+--train_dataset_partitions /data/DataSet/market1501/partitions.pkl \
 --ids_per_batch 32 \
 --ims_per_id 4 \
 --normalize_feature false \
@@ -54,7 +54,7 @@ cd AlignedReID/script
 python train.py \
 --resume True
 --train_dataset market1501 \
---train_dataset_partitons /data/DataSet/market1501/partitions.pkl \
+--train_dataset_partitions /data/DataSet/market1501/partitions.pkl \
 --ids_per_batch 32 \
 --ims_per_id 4 \
 --normalize_feature false \
@@ -79,9 +79,9 @@ python test.py \
 --onlytest True \
 --to_re_rank True \
 --train_dataset market1501 \
---train_dataset_partitons /data/DataSet/market1501/partitions.pkl \
+--train_dataset_partitions /data/DataSet/market1501/partitions.pkl \
 --test_dataset market1501 \
---test_dataset_partitons /data/DataSet/market1501/partitions.pkl 
+--test_dataset_partitions /data/DataSet/market1501/partitions.pkl 
 ```
 if you want to test on other dataset, use this script.
 
@@ -92,7 +92,7 @@ python test.py \
 --onlytest True \
 --to_re_rank True \
 --train_dataset_dataset market1501 \
---train_dataset_partitons /data/DataSet/market1501/partitions.pkl \
+--train_dataset_partitions /data/DataSet/market1501/partitions.pkl \
 --test_dataset duke \
 --test_dataset_dataset_partitions /data/DataSet/duke/partitions.pkl
 ```
