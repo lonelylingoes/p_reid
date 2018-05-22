@@ -108,6 +108,7 @@ On Market1501 with setting
 
 ## further sesults
 Use some advices from 'Re-ID done right：towards good practices for person re-identification', the finnal results is:
+
 |   | Rank-1 (%) | mAP ( %) | Rank-1 (%) after Re-ranking | mAP (%) after Re-ranking |
 | --- | :---: | :---: | :---: | :---: |
 | train with global + local loss/test with global distance | 91.09 | 78.17 | 92.73 | 89.82 |
