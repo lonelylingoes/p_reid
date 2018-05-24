@@ -20,6 +20,7 @@ from reid_utils.common_utils import load_pickle
 from reid_utils.dataset_utils import parse_full_path_market1501_im_name
 from reid_utils.dataset_utils import parse_full_path_duke_im_name
 from reid_utils.dataset_utils import parse_full_path_new_im_name
+from reid_utils.dataset_utils import parse_full_path_msmt17_im_name
 from collections import defaultdict
 from PIL import Image
 
@@ -48,8 +49,10 @@ class ReIdDataSet(Dataset):
                 self.parse_full_path_im_name = parse_full_path_duke_im_name
             elif cfg.train_dataset == 'cuhk03':
                 self.parse_full_path_im_name =  parse_full_path_new_im_name
+            elif cfg.train_dataset == 'msmt17':
+                self.parse_full_path_im_name = parse_full_path_msmt17_im_name
             elif cfg.train_dataset == 'combine':
-                pass
+                self.parse_full_path_im_name =  parse_full_path_new_im_name
 
             self.ims_per_id = cfg.ims_per_id
             self.ims_names = partition['trainval_im_names']
@@ -69,8 +72,10 @@ class ReIdDataSet(Dataset):
                 self.parse_full_path_im_name = parse_full_path_duke_im_name
             elif cfg.train_dataset == 'cuhk03':
                 self.parse_full_path_im_name =  parse_full_path_new_im_name
+            elif cfg.train_dataset == 'msmt17':
+                self.parse_full_path_im_name = parse_full_path_msmt17_im_name
             elif cfg.train_dataset == 'combine':
-                pass
+                self.parse_full_path_im_name =  parse_full_path_new_im_name
 
             self.ims_per_id = cfg.ims_per_id
             self.ims_names = partition['train_im_names']
@@ -90,8 +95,10 @@ class ReIdDataSet(Dataset):
                 self.parse_full_path_im_name = parse_full_path_duke_im_name
             elif cfg.train_dataset == 'cuhk03':
                 self.parse_full_path_im_name =  parse_full_path_new_im_name
+            elif cfg.train_dataset == 'msmt17':
+                self.parse_full_path_im_name = parse_full_path_msmt17_im_name
             elif cfg.train_dataset == 'combine':
-                pass
+                self.parse_full_path_im_name =  parse_full_path_new_im_name
 
             self.ims_names = partition['val_im_names']
             self.marks = partition['val_marks']
@@ -103,7 +110,9 @@ class ReIdDataSet(Dataset):
                 self.parse_full_path_im_name = parse_full_path_duke_im_name
             elif cfg.test_dataset == 'cuhk03':
                 self.parse_full_path_im_name =  parse_full_path_new_im_name
-            elif cfg.test_dataset == 'combine':
+            elif cfg.test_dataset == 'msmt17':
+                self.parse_full_path_im_name = parse_full_path_msmt17_im_name
+            else:
                 pass
 
             self.ims_names = partition['test_im_names']

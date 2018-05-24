@@ -121,8 +121,7 @@ def transform(zip_file, train_test_partition_file, save_dir=None):
         test_im_names = list(train_test_partition[im_type]['query_im_names']) \
                         + list(train_test_partition[im_type]['gallery_im_names'])
         test_marks = [0, ] * len(train_test_partition[im_type]['query_im_names']) \
-                    + [1, ] * len(
-        train_test_partition[im_type]['gallery_im_names'])
+                    + [1, ] * len(train_test_partition[im_type]['gallery_im_names'])
         # add full path
         trainval_im_names = [osp.join(im_dir, name) for name in trainval_im_names]
         train_im_names = [osp.join(im_dir, name) for name in train_im_names]

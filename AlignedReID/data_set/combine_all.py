@@ -25,7 +25,7 @@ from reid_utils.dataset_utils import new_im_name_tmpl
 from reid_utils.dataset_utils import parse_original_new_im_name
 from reid_utils.dataset_utils import parse_original_duke_im_name
 from reid_utils.dataset_utils import parse_original_market1501_im_name
-
+from reid_utils.dataset_utils import parse_original_msmt17_im_name
 
 def move_ims(
         ori_im_paths,
@@ -61,7 +61,8 @@ def get_parse_im_funtion(data_set):
         return parse_original_market1501_im_name
     elif data_set =='duke':
         return parse_original_duke_im_name
-
+    elif data_set =='msmt17':
+        return parse_original_msmt17_im_name
 
 def combine_trainval_sets(
         im_dirs,
@@ -134,9 +135,19 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
+        '--msmt17_im_dir',
+        type=str,
+        default=ospeu('/data/DataSet/msmt17/'))
+    parser.add_argument(
+        '--msmt17_partition_file',
+        type=str,
+        default=ospeu('/data/DataSet/msmt17/partitions.pkl')
+    )
+
+    parser.add_argument(
         '--save_dir',
         type=str,
-        default=ospeu('/data/DataSet/market1501_cuhk03_duke')
+        default=ospeu('/data/DataSet/combine_all')
     )
 
     args = parser.parse_args()
@@ -144,14 +155,16 @@ if __name__ == '__main__':
     im_dirs = [
         ospap(ospeu(args.market1501_im_dir)),
         ospap(ospeu(args.cuhk03_im_dir)),
-        ospap(ospeu(args.duke_im_dir))
+        ospap(ospeu(args.duke_im_dir)),
+        ospap(ospeu(args.msmt17_im_dir))
     ]
     partition_files = [
         ospap(ospeu(args.market1501_partition_file)),
         ospap(ospeu(args.cuhk03_partition_file)),
-        ospap(ospeu(args.duke_partition_file))
+        ospap(ospeu(args.duke_partition_file)),
+        ospap(ospeu(args.msmt17_partition_file))
     ]
-    data_sets = ['market1501', 'cuhk03', 'duke']
+    data_sets = ['market1501', 'cuhk03', 'duke', 'msmt17']
 
     save_dir = ospap(ospeu(args.save_dir))
     may_make_dir(save_dir)

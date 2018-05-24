@@ -72,6 +72,26 @@ def parse_full_path_market1501_im_name(im_name, parse_type='id'):
     """
     return parse_original_market1501_im_name(osp.basename(im_name), parse_type)
 
+
+def parse_original_msmt17_im_name(im_name, parse_type='id'):
+    """
+    Get the person id or cam from an image name.
+    """
+    assert parse_type in ('id', 'cam')
+    if parse_type == 'id':
+        parsed = int(im_name[:4])
+    else:
+        parsed = int(im_name[9:11])
+    return parsed
+
+
+def parse_full_path_msmt17_im_name(im_name, parse_type='id'):
+    """
+    Get the person id or cam from an full path image name.
+    """
+    return parse_original_msmt17_im_name(osp.basename(im_name), parse_type)
+
+
 def get_im_names(im_dir, pattern='*.jpg', return_np=True, return_path=False):
     """
     Get the image names in a dir. Optional to return numpy array, paths.
@@ -131,7 +151,7 @@ def partition_train_val_set(im_names, parse_im_name,
     gallery_inds = []
 
     if val_ids_num is None:
-        assert 0 < val_prop < 1
+        assert 0 < val_prop <= 1
         val_ids_num = int(len(unique_ids) * val_prop)
     num_selected_ids = 0
     for unique_id in unique_ids:

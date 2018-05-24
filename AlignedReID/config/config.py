@@ -27,7 +27,7 @@ class Config(object):
     parser.add_argument('--num_models', type=int, default=1)
     parser.add_argument('--set_seed', type=str2bool, default=False)
     parser.add_argument('--train_dataset', type=str, default='market1501',
-                    choices=['market1501', 'cuhk03', 'duke', 'combined'])
+                    choices=['market1501', 'cuhk03', 'duke', 'msmt17', 'combined'])
     parser.add_argument('--test_dataset', type=str, default='')
     parser.add_argument('--train_dataset_partitions', type=str, default='/data/DataSet/market1501/partitions.pkl')
     parser.add_argument('--test_dataset_partitions', type=str, default='')
@@ -38,7 +38,7 @@ class Config(object):
     parser.add_argument('--ids_per_batch', type=int, default=32)
     parser.add_argument('--ims_per_id', type=int, default=4)
 
-    parser.add_argument('--log_to_file', type=str2bool, default=True)
+    parser.add_argument('--log_to_file', type=str2bool, default=False)
     parser.add_argument('--normalize_feature', type=str2bool, default=False)
     parser.add_argument('--to_re_rank', type=str2bool, default=False)
     parser.add_argument('--local_dist_own_hard_sample',
@@ -95,7 +95,8 @@ class Config(object):
 
     # Image Processing
     # (height, width)
-    self.im_resize_size = (256, 128)
+    self.im_resize_size = (416, 208)
+    #self.im_resize_size = (256, 128)
     self.im_crop_size = (256, 128)
     self.keep_ratio_size = 416# the bigger side
     self.random_rotation_degree = 30
