@@ -22,10 +22,14 @@ from reid_utils.common_utils import save_pickle
 from reid_utils.common_utils import load_pickle
 
 from reid_utils.dataset_utils import new_im_name_tmpl
+from reid_utils.dataset_utils import parse_full_path_new_im_name
 from reid_utils.dataset_utils import parse_original_new_im_name
 from reid_utils.dataset_utils import parse_original_duke_im_name
 from reid_utils.dataset_utils import parse_original_market1501_im_name
 from reid_utils.dataset_utils import parse_original_msmt17_im_name
+from reid_utils.dataset_utils import parse_original_msmt17_im_name
+from reid_utils.dataset_utils import partition_train_val_set
+
 
 def move_ims(
         ori_im_paths,
@@ -83,9 +87,28 @@ def combine_trainval_sets(
         new_start_id += len(id_mapping)
         new_im_names += new_im_names_
 
-    new_ids = range(new_start_id)
+    trainval_ids = range(new_start_id)
+    
+    partitions = partition_train_val_set(
+                    new_im_names, parse_full_path_new_im_name, val_ids_num=300)
+
+    train_im_names = partitions['train_im_names']
+    train_ids = list(set([parse_full_path_new_im_name(n, 'id')
+                        for n in partitions['train_im_names']]))
+    train_ids.sort()
+    train_ids2labels = dict(zip(train_ids, range(len(train_ids))))
+
+    val_marks = [0, ] * len(partitions['val_query_im_names']) \
+                + [1, ] * len(partitions['val_gallery_im_names'])
+    val_im_names = list(partitions['val_query_im_names']) \
+                    + list(partitions['val_gallery_im_names'])
+
     partitions = {'trainval_im_names': new_im_names,
-                    'trainval_ids2labels': dict(zip(new_ids, new_ids)),
+                    'trainval_ids2labels': dict(zip(trainval_ids, trainval_ids)),
+                    'train_im_names': train_im_names,
+                    'train_ids2labels': train_ids2labels,
+                    'val_im_names': val_im_names,
+                    'val_marks': val_marks,
                     }
     partition_file = ospj(save_dir, 'partitions.pkl')
     save_pickle(partitions, partition_file)
