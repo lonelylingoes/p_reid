@@ -170,8 +170,8 @@ def create_data_loader(cfg, data_type, epoch=1, total_epoch=1e5):
         # split the train stage into 3 stages.
         if epoch < int(total_epoch /3):
             stage = 1
-        elif epoch >= int(total_epoch /3) and epoch < int(total_epoch /3)*2:
-            stage = 2
+        #elif epoch >= int(total_epoch /3) and epoch < int(total_epoch /3)*2:
+        #    stage = 2
         else:
             stage = 3
 
