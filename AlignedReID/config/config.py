@@ -176,12 +176,18 @@ class Config(object):
     # information for each epoch, set this to a large value, e.g. 1e10.
     self.log_steps = 1e10
 
+    self.resume = args.resume
+
     # Only test and without training.
     self.only_test = args.only_test
+    # for market1501,duke,msmt17
     self.separate_camera_set = False
     self.single_gallery_shot = False
     self.first_match_break = True
-    self.resume = args.resume
+    # for cuhk03
+    #self.separate_camera_set = True
+    #self.single_gallery_shot = True
+    #self.first_match_break = False
 
     #######
     # Log #
