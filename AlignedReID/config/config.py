@@ -27,7 +27,7 @@ class Config(object):
     parser.add_argument('--num_models', type=int, default=1)
     parser.add_argument('--set_seed', type=str2bool, default=False)
     parser.add_argument('--train_dataset', type=str, default='market1501',
-                    choices=['market1501', 'cuhk03', 'duke', 'msmt17', 'combined'])
+                    choices=['market1501', 'cuhk03', 'duke', 'msmt17', 'combine'])
     parser.add_argument('--test_dataset', type=str, default='')
     parser.add_argument('--train_dataset_partitions', type=str, default='/data/DataSet/market1501/partitions.pkl')
     parser.add_argument('--test_dataset_partitions', type=str, default='')

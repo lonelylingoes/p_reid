@@ -49,7 +49,7 @@ def move_ims(
         cnt[(new_id, cam)] += 1
         new_im_name = new_im_name_tmpl.format(new_id, cam, cnt[(new_id, cam)] - 1)
         shutil.copy(im_path, ospj(new_im_dir, new_im_name))
-        new_im_names.append(new_im_name)
+        new_im_names.append(ospj(new_im_dir, new_im_name))
     return new_im_names, id_mapping
 
 
