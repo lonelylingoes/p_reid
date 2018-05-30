@@ -147,7 +147,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--save_dir',
         type=str,
-        default=ospeu('/data/DataSet/combine_all')
+        default=ospeu('/data/DataSet/combine')
     )
 
     args = parser.parse_args()
@@ -167,6 +167,8 @@ if __name__ == '__main__':
     data_sets = ['market1501', 'cuhk03', 'duke', 'msmt17']
 
     save_dir = ospap(ospeu(args.save_dir))
+    for data_set in data_sets:
+        save_dir = save_dir + '_' + data_set
     may_make_dir(save_dir)
 
     combine_trainval_sets(im_dirs, partition_files, data_sets, save_dir)
