@@ -184,10 +184,7 @@ class Config(object):
     self.separate_camera_set = False
     self.single_gallery_shot = False
     self.first_match_break = True
-    # for cuhk03
-    #self.separate_camera_set = True
-    #self.single_gallery_shot = True
-    #self.first_match_break = False
+
 
     #######
     # Log #

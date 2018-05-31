@@ -62,7 +62,7 @@ def get_parse_im_funtion(data_set):
     if data_set == 'market1501':
         return parse_original_market1501_im_name
     elif data_set =='cuhk03':
-        return parse_original_market1501_im_name
+        return parse_original_new_im_name
     elif data_set =='duke':
         return parse_original_duke_im_name
     elif data_set =='msmt17':
