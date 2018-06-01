@@ -130,12 +130,19 @@ def main():
                 epoch + 1,
                 cfg.total_epochs,
                 cfg.exp_decay_at_epoch)
-        else:
-            model_utils.adjust_lr_staircase(
+        elif cfg.lr_decay_type == 'staircase_at':
+            model_utils.adjust_lr_staircase_at(
                 optimizer,
                 cfg.base_lr,
                 epoch + 1,
                 cfg.staircase_decay_at_epochs,
+                cfg.staircase_decay_multiply_factor)
+        elif cfg.lr_decay_type == 'staircase_every':
+            model_utils.adjust_lr_staircase_every(
+                optimizer,
+                cfg.base_lr,
+                epoch + 1,
+                cfg.staircase_decay_every_epochs,
                 cfg.staircase_decay_multiply_factor)
 
         # for the purpose gradually increase the random patch 

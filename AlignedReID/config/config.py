@@ -59,10 +59,12 @@ class Config(object):
 
     parser.add_argument('--base_lr', type=float, default=2e-4)
     parser.add_argument('--lr_decay_type', type=str, default='exp',
-                        choices=['exp', 'staircase'])
+                        choices=['exp', 'staircase_at', 'staircase_every'])
     parser.add_argument('--exp_decay_at_epoch', type=int, default=151)
     parser.add_argument('--staircase_decay_at_epochs',
                         type=str, default='(101, 201,)')
+    parser.add_argument('--staircase_decay_every_epochs',
+                        type=int, default = 20)
     parser.add_argument('--staircase_decay_multiply_factor',
                         type=float, default=0.1)
     parser.add_argument('--total_epochs', type=int, default=300)
@@ -168,6 +170,7 @@ class Config(object):
     self.lr_decay_type = args.lr_decay_type
     self.exp_decay_at_epoch = args.exp_decay_at_epoch
     self.staircase_decay_at_epochs = eval(args.staircase_decay_at_epochs)
+    self.staircase_decay_every_epochs = args.staircase_decay_every_epochs
     self.staircase_decay_multiply_factor = args.staircase_decay_multiply_factor
     # Number of epochs to train
     self.total_epochs = args.total_epochs
@@ -196,6 +199,17 @@ class Config(object):
     # 3) checkpoint will be saved
     self.log_to_file = args.log_to_file
 
+    if self.lr_decay_type == 'exp':
+      decay_stragey = 'decay_at_{}_'.format(self.exp_decay_at_epoch)
+    elif self.lr_decay_type == 'staircase_at':
+      decay_stragey = 'decay_at_{}_factor_{}_'.format(
+          args.staircase_decay_at_epochs,
+          tfs(self.staircase_decay_multiply_factor))
+    elif self.lr_decay_type == 'staircase_every':
+      decay_stragey = 'decay_every_{}_factor_{}_'.format(
+          args.staircase_decay_every_epochs,
+          tfs(self.staircase_decay_multiply_factor))
+
     # The root dir of logs.
     if args.exp_dir == '':
       self.exp_dir = osp.join(
@@ -215,11 +229,7 @@ class Config(object):
         'ldmlw_{}_'.format(tfs(self.ldm_loss_weight)) +
         'lr_{}_'.format(tfs(self.base_lr)) +
         '{}_'.format(self.lr_decay_type) +
-        ('decay_at_{}_'.format(self.exp_decay_at_epoch)
-         if self.lr_decay_type == 'exp'
-         else 'decay_at_{}_factor_{}_'.format(
-          args.staircase_decay_at_epochs,
-          tfs(self.staircase_decay_multiply_factor))) +
+        decay_stragey +
         'total_{}'.format(self.total_epochs),
       )
     else:

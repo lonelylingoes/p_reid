@@ -119,7 +119,7 @@ def adjust_lr_exp(optimizer, base_lr, epoch, total_epoch, start_decay_at_epoch):
 
 
 
-def adjust_lr_staircase(optimizer, base_lr, epoch, decay_at_epochs, factor):
+def adjust_lr_staircase_at(optimizer, base_lr, epoch, decay_at_epochs, factor):
     """
     Multiplied by a factor at the BEGINNING of specified epochs. All 
     parameters in the optimizer share the same learning rate.
@@ -153,6 +153,42 @@ def adjust_lr_staircase(optimizer, base_lr, epoch, decay_at_epochs, factor):
     for g in optimizer.param_groups:
         g['lr'] = base_lr * factor ** (ind + 1)
     print('=====> lr adjusted to {:.10f}'.format(g['lr']).rstrip('0'))
+
+
+def adjust_lr_staircase_every(optimizer, base_lr, epoch, decay_every_epochs, factor):
+    """
+    Multiplied by a factor at the BEGINNING of specified epochs. All 
+    parameters in the optimizer share the same learning rate.
+    
+    Args:
+        optimizer: a pytorch `Optimizer` object
+        base_lr: starting learning rate
+        epoch: current epoch, epoch >= 1
+        decay_every_epochs: a int; learning rate is multiplied by a factor 
+        at the BEGINNING of these epochs
+        factor: a number in range (0, 1)
+    
+    Example:
+        base_lr = 1e-3
+        decay_at_epochs = [51, 101]
+        factor = 0.1
+        It means the learning rate starts at 1e-3 and is multiplied by 0.1 at the 
+        BEGINNING of the 51'st epoch, and then further multiplied by 0.1 at the 
+        BEGINNING of the 101'st epoch, then stays unchanged till the end of 
+        training.
+    
+    NOTE: 
+        It is meant to be called at the BEGINNING of an epoch.
+    """
+    assert epoch >= 1, "Current epoch number should be >= 1"
+
+    if epoch % decay_every_epochs != 0:
+        return
+
+    for g in optimizer.param_groups:
+        g['lr'] = base_lr * factor ** (epoch // decay_every_epochs  + 1)
+    print('=====> lr adjusted to {:.10f}'.format(g['lr']).rstrip('0'))
+
 
 
 def transer_var_tensor(var_or_tensor, device_id = 0):

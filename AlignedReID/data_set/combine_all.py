@@ -27,7 +27,6 @@ from reid_utils.dataset_utils import parse_original_new_im_name
 from reid_utils.dataset_utils import parse_original_duke_im_name
 from reid_utils.dataset_utils import parse_original_market1501_im_name
 from reid_utils.dataset_utils import parse_original_msmt17_im_name
-from reid_utils.dataset_utils import parse_original_msmt17_im_name
 from reid_utils.dataset_utils import partition_train_val_set
 
 
