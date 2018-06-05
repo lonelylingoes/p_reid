@@ -202,11 +202,11 @@ class Config(object):
     if self.lr_decay_type == 'exp':
       decay_stragey = 'decay_at_{}_'.format(self.exp_decay_at_epoch)
     elif self.lr_decay_type == 'staircase_at':
-      decay_stragey = 'decay_at_{}_factor_{}_'.format(
+      decay_stragey = '_{}_decay_factor_{}_'.format(
           args.staircase_decay_at_epochs,
           tfs(self.staircase_decay_multiply_factor))
     elif self.lr_decay_type == 'staircase_every':
-      decay_stragey = 'decay_every_{}_factor_{}_'.format(
+      decay_stragey = '_{}_decay_factor_{}_'.format(
           args.staircase_decay_every_epochs,
           tfs(self.staircase_decay_multiply_factor))
 
