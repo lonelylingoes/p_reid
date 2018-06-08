@@ -111,9 +111,10 @@ class ReId(object):
         returns:
             features: the features vector extracted by the model, the shape is (n,c)
         '''
-        pictures = [common_utils.pre_process_im(picture, (256, 128)) for picture in pictures]
+        pictures = [common_utils.pre_process_im(picture, (416, 208)) for picture in pictures]
         pictures = np.array(pictures)
-        ims_var = Variable(transer_var_tensor(torch.from_numpy(pictures), self.device_id).float(), volatile=True)
+        with torch.no_grad():
+            ims_var = Variable(transer_var_tensor(torch.from_numpy(pictures), self.device_id).float())
         global_feats, local_feats = self.model(ims_var)[:2]
         global_feats = global_feats.data.cpu().numpy()
         return global_feats
@@ -332,7 +333,7 @@ class ReId(object):
         files.sort()
         for file in files:
             mark, person_id, camera_id, scene_id = self.__parse_image_name__(file)
-            images.append(common_utils.pre_process_im(os.path.join(images_path, file), (256, 128)))
+            images.append(common_utils.pre_process_im(os.path.join(images_path, file), (416, 208)))
             marks.append(mark)
             person_ids.append(person_id)
             camera_ids.append(camera_id)
