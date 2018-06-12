@@ -1,4 +1,4 @@
-torch==0.3.0.post4
+torch==0.4.0
 opencv_python==2.7
 numpy==1.11.3
 hickle==2.1.0
