@@ -49,7 +49,7 @@ class ReId(object):
     def __init__(self, 
                 model_path,
                 identy_threshold,
-                device_id = -1):
+                device_id = 0):
         '''
         args:
             model_path: the model file path
@@ -85,23 +85,8 @@ class ReId(object):
         scene_id = int(image_name[10])
         return mark, person_id, camera_id, scene_id
 
-    def get_threshold(self,
-                        to_re_rank=False,
-                        use_local_distance=False,
-                        normalize_feature=False):
-        if to_re_rank:
-            threshold = 0.16
-        elif normalize_feature:
-            if use_local_distance:
-                threshold = 6
-            else:
-                threshold = 1.5   
-        else:
-            if use_local_distance:
-                threshold = 15
-            else:
-                threshold = 1.65
-        return threshold
+    def get_threshold(self):
+        return self.identy_threshold
 
     def extract_features(self, pictures):
         '''
@@ -150,7 +135,6 @@ class ReId(object):
                                             identy_confirm_strategy, to_re_rank)
         
         # the threshold decides whether same
-        #threshold = self.get_threshold(to_re_rank, False, False)
         threshold = self.identy_threshold
         # associate confirmed person first 
         if confirmed_persons != -1:
@@ -250,7 +234,7 @@ class ReId(object):
         return compact_q_g_dist
 
 
-    def decide(self, 
+    def judge_from_file(self, 
                 images_path,
                 to_re_rank=True,
                 use_local_distance=False,
@@ -281,7 +265,7 @@ class ReId(object):
         # the numberof query is m, the number of gallery is n
         m, n = dist_mat.shape
         # the threshold decides whether same
-        threshold = self.get_threshold(to_re_rank, use_local_distance, normalize_feature)
+        threshold = self.identy_threshold
         # sort and find correct matches
         indexs = np.argmin(dist_mat, axis=1)
         sorted_dis = np.sort(dist_mat, axis =1)
@@ -434,9 +418,9 @@ class ReId(object):
 
 
 def main():
-    reId = ReId('/data/chensijing/AlignedReID/ckpt_dir/ckpt_path')
+    reId = ReId('/data/chensijing/AlignedReID/ckpt_dir/ckpt_path', 1.5)
     for i in range(10):
-        found_ids = reId.decide('/home/ubun-titan/Debug/image_dir1')
+        found_ids = reId.judge_from_file('/home/ubun-titan/Debug/image_dir1')
     print(found_ids)
 
 if __name__ == '__main__':
