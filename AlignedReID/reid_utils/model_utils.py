@@ -218,8 +218,8 @@ def load_test_model(model, cfg):
     # del the unused layer when test
     dest_state_dict = model.state_dict()
     for name, param in src_state_dict.items():
-        if 'module.' in name:# fix the 'bug' of strip()
-            name = name.strip('module.')
+        if 0 == name.find('module.'):# fix the 'bug' of strip()
+            name = name[len('module.'):]
         if name not in dest_state_dict:
             continue
         if isinstance(param, torch.nn.Parameter):
