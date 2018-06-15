@@ -67,6 +67,7 @@ class ReId(object):
         self.model = Model(local_conv_out_channels=128, pretrained = False)
         # load model param
         self.model = model_utils.load_test_model(self.model, cfg)
+        self.model.eval()
         # after load model, parallel the model
         if torch.cuda.device_count() > 1:
             self.model = nn.DataParallel(self.model, device_ids=[device_id])
