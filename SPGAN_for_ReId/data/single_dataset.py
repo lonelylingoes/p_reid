@@ -10,7 +10,7 @@ class SingleDataset(BaseDataset):
         super(SingleDataset, self).__init__()
         self.opt = opt
         self.root = opt.dataroot
-        self.dir_A = os.path.join(opt.dataroot)
+        self.dir_A = os.path.join(opt.dataroot, opt.sub_dirA)
 
         self.A_paths = make_dataset(self.dir_A)
 

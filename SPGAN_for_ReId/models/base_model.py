@@ -30,12 +30,11 @@ class BaseModel(object):
         pass
 
     def setup(self, opt):
-        '''load the model's checkpoint; print networks; create shedulars'''
+        '''load the model's checkpoint; print networks; create shedulars, get epoch_count.'''
+        if not self.isTrain or opt.continue_train:
+            opt.epoch_count = self.load_networks(opt.which_epoch)
         if self.isTrain:
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
-
-        if not self.isTrain or opt.continue_train:
-            self.load_networks(opt.which_epoch)
         self.print_networks(opt.verbose)
 
     def eval(self):
@@ -87,7 +86,7 @@ class BaseModel(object):
                 errors_ret[name] = float(getattr(self, 'loss_' + name))
         return errors_ret
 
-    def save_networks(self, which_epoch):
+    def save_networks(self, which_epoch, epoch_value):
         '''save models to the disk'''
         for name in self.model_names:
             if isinstance(name, str):
@@ -96,10 +95,13 @@ class BaseModel(object):
                 net = getattr(self, 'net' + name)
 
                 if len(self.gpu_ids) > 0 and torch.cuda.is_available():
-                    torch.save(net.module.cpu().state_dict(), save_path)
-                    net.cuda(self.gpu_ids[0])
+                    # add .module, otherwise the name will add 'module'
+                    ckpt = dict(state_dict=net.module.state_dict(),
+                            epoch=epoch_value)
                 else:
-                    torch.save(net.cpu().state_dict(), save_path)
+                    ckpt = dict(state_dict=net.cpu().state_dict(),
+                            epoch=epoch_value)
+                torch.save(ckpt, save_path)
 
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
         key = keys[i]
@@ -123,11 +125,12 @@ class BaseModel(object):
                 print('loading the model from %s' % load_path)
                 # if you are using PyTorch newer than 0.4 (e.g., built from
                 # GitHub source), you can remove str() on self.device
-                state_dict = torch.load(load_path, map_location=str(self.device))
+                checkpoint = torch.load(load_path, map_location=str(self.device))
                 # patch InstanceNorm checkpoints prior to 0.4
-                for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
-                    self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
-                net.load_state_dict(state_dict)
+                for key in list(checkpoint['state_dict'].keys()):  # need to copy keys here because we mutate in loop
+                    self.__patch_instance_norm_state_dict(checkpoint['state_dict'], net, key.split('.'))
+                net.load_state_dict(checkpoint['state_dict'])
+        return checkpoint['epoch']
 
 
     def print_networks(self, verbose):

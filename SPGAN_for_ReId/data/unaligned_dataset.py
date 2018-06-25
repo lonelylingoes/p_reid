@@ -12,8 +12,8 @@ class UnalignedDataset(BaseDataset):
         super(UnalignedDataset, self).__init__()
         self.opt = opt
         self.root = opt.dataroot
-        self.dir_A = os.path.join(opt.dataroot, opt.phase + 'A')
-        self.dir_B = os.path.join(opt.dataroot, opt.phase + 'B')
+        self.dir_A = os.path.join(opt.dataroot, opt.sub_dirA)
+        self.dir_B = os.path.join(opt.dataroot, opt.sub_dirB)
 
         self.A_paths = make_dataset(self.dir_A)
         self.B_paths = make_dataset(self.dir_B)

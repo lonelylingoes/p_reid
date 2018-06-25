@@ -19,3 +19,49 @@ If you this project in your research, please cite the paper
 ```
 
 This code refered a lot of the [Simon4Yan's Learning-via-Translation](https://github.com/Simon4Yan/Learning-via-Translation) and [junyanz's pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix).
+
+
+
+## Prerequisites 
+- python 2 or 3
+- NVIDIA GPU + CUDA CuDNN
+- Other requirement can install by this command:
+```
+pip install -r requirements.txt
+```
+
+## Train the model
+If you want to train the model, run this script:
+```
+cd script
+python train.py --dataroot /data/DataSet/ --sub_dirA /market1501 --sub_dirA /duke --name market_duke_spgan --model spgan --pool_size 50 --no_dropout 
+```
+It may be rasied some exceptions about http, this is caused by the visdom.server not running, you can shutdown the show of plot:
+```
+python train.py --dataroot /data/DataSet/ --sub_dirA /market1501 --sub_dirA /duke --name market_duke_spgan --model spgan --pool_size 50 --no_dropout --display_id 0
+```
+or start the visdom.server first:
+```
+python -m visdom.server
+```
+
+
+## view the training results and loss plots
+To view training results and loss plots, run python -m visdom.server and click the URL http://localhost:8097. To see more intermediate results, check out ./checkpoints/market_duke_spgan/web/index.html
+
+
+## Test the model
+If you want to test the model, run this script:
+```
+cd script
+python test.py --dataroot /data/DataSet/ --sub_dirA /market1501 --sub_dirA /duke --name market_duke_spgan --model spgan --no_dropout
+```
+This scrpt will generate two direction transfers: A->B and B->A.
+
+
+## Single direction transfer
+If you just want to transform dataset A to B, use this script:
+```
+cd script
+python test.py --dataroot /data/DataSet/ --sub_dirA /market1501 --name market_duke_spgan --model test --dataset_mode single
+```

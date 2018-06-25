@@ -3,10 +3,10 @@
 
 def create_model(opt):
     model = None
-    if opt.model == 'cycle_gan':
+    if opt.model == 'spgan':
         assert(opt.dataset_mode == 'unaligned')
-        from .cycle_gan_model import CycleGANModel
-        model = CycleGANModel(opt)
+        from .spgan_model import SPGANModel
+        model = SPGANModel(opt)
     elif opt.model == 'test':
         assert(opt.dataset_mode == 'single')
         from .test_model import TestModel

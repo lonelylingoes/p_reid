@@ -23,16 +23,14 @@ def main():
     model.setup(opt)
     # create website
     web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
-    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
+    webpage = html.HTML(web_dir, 'Testing, Experiment = %s,  Epoch = %s' % (opt.name, opt.which_epoch))
     # test
     for i, data in enumerate(data_loader):
-        if i >= opt.how_many:
-            break
         model.set_input(data)
         model.test()
         visuals = model.get_current_visuals()
         img_path = model.get_image_paths()
-        if i % 5 == 0:
+        if i % opt.display_freq == 0:
             print('processing (%04d)-th image... %s' % (i, img_path))
         save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
 

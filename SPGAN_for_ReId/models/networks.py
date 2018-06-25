@@ -103,7 +103,7 @@ def define_D(input_nc, ndf, which_model_netD,
     return init_net(netD, init_type, gpu_ids)
 
 
-def metric_net(input_nc, input_w, input_h, ndf, norm='batch', init_type='normal', gpu_ids=[]):
+def metric_net(input_nc, ndf, input_w, input_h, norm='batch', init_type='normal', gpu_ids=[]):
     '''
     the siamese net.
     args:
@@ -160,17 +160,22 @@ class SiameseNet(nn.Module):
                 nn.LeakyReLU(0.2, True), 
                 nn.MaxPool2d(2, stride = 2)]# 1 x 1 x ndf*8
 
+        self.base = nn.Sequential(*model)
+
         scale = 256
-        model += [nn.Linear((input_w // scale) *(input_h // scale) * ndf*8, ndf*2),
+        fully_layer = [nn.Linear((input_w // scale) *(input_h // scale) * ndf*8, ndf*2),
                 nn.LeakyReLU(0.2, True),
                 nn.Dropout(0.5),
                 nn.Linear(ndf*2, ndf)]
 
-        self.model = nn.Sequential(*model)
+        self.fully_layer = nn.Sequential(*fully_layer)
 
 
     def forward(self, input):
-        return self.model(input)
+        output = self.base(input)
+        output = output.view(output.size(0), -1)
+        output = self.fully_layer(output)
+        return output
 
 
 class MetricLoss(nn.Module):
@@ -185,11 +190,11 @@ class MetricLoss(nn.Module):
             y: input y
             positive: bool value, indicate x and y is positive pair or negative pair.
         '''
-        d = F.pairwise_distance(x, y, 2)
+        d = F.pairwise_distance(x, y, 2, keepdim =True)
         if positive:
             return torch.mean(torch.pow(d, 2), 1)
         else:
-            return torch.mean(torch.pow(torch.max(self.margin -d, 0), 2), 1)
+            return torch.mean(torch.pow(F.relu(self.margin-d), 2), 1)
 
 
  

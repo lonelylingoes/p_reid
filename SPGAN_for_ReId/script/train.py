@@ -2,7 +2,6 @@
 import time
 from options.train_options import TrainOptions
 from data import CustomDatasetDataLoader
-from models.spgan_model import SPGANModel
 from data import CreateDataset
 from models import create_model
 from util.visualizer import Visualizer
@@ -52,14 +51,14 @@ def main():
             if total_steps % opt.save_latest_freq == 0:
                 print('saving the latest model (epoch %d, total_steps %d)' %
                       (epoch, total_steps))
-                model.save_networks('latest')
+                model.save_networks('latest', epoch)
 
             iter_data_time = time.time()
         if epoch % opt.save_epoch_freq == 0:
             print('saving the model at the end of epoch %d, iters %d' %
                   (epoch, total_steps))
-            model.save_networks('latest')
-            model.save_networks(epoch)
+            model.save_networks('latest', epoch)
+            model.save_networks(epoch, epoch)
 
         print('End of epoch %d / %d \t Time Taken: %d sec' %
               (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))

@@ -7,12 +7,12 @@ from . import networks
 
 
 class SPGANModel(BaseModel):
-    def __inti__(self, opt):
+    def __init__(self, opt):
         super(SPGANModel, self).__init__(opt)
 
         # specify the training losses you want to print out. 
         # The program will call base_model.get_current_losses
-        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'metric']
+        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'M']
         # specify the images you want to save/display. The program will call base_model.get_current_visuals
         visual_names_A = ['real_A', 'fake_B', 'rec_A']
         visual_names_B = ['real_B', 'fake_A', 'rec_B']
@@ -22,11 +22,9 @@ class SPGANModel(BaseModel):
 
         self.visual_names = visual_names_A + visual_names_B
 
-        if self.isTrain and self.opt.lambda_metric > 0.0:
-            self.visual_names.append('metric')
         # specify the models you want to save to the disk. The program will call base_model.save_networks and base_model.load_networks
         if self.isTrain:
-            self.model_names = ['G_A', 'G_B', 'D_A', 'D_B', 'metric']
+            self.model_names = ['G_A', 'G_B', 'D_A', 'D_B', 'Metric']
         else:  # during test time, only load Gs
             self.model_names = ['G_A', 'G_B']
 
@@ -47,7 +45,7 @@ class SPGANModel(BaseModel):
                                             opt.which_model_netD,
                                             opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids)
             self.netMetric = networks.metric_net(opt.input_nc, opt.ndf,
-                                                    opt.input_w, opt.input_h,
+                                                    opt.fineSize[1], opt.fineSize[0],
                                                     opt.norm, opt.init_type, self.gpu_ids)
 
         if self.isTrain:
@@ -88,6 +86,11 @@ class SPGANModel(BaseModel):
         self.fake_A = self.netG_B(self.real_B)
         self.rec_B = self.netG_A(self.fake_A)
 
+        self.metric_A = self.netMetric(self.real_A)
+        self.metric_fake_B = self.netMetric(self.fake_B)
+        self.metric_B = self.netMetric(self.real_B)
+        self.metric_fake_A = self.netMetric(self.fake_A)
+
     def backward_D_basic(self, netD, real, fake):
         # Real
         pred_real = netD(real)
@@ -113,11 +116,11 @@ class SPGANModel(BaseModel):
         '''should be called after backward_G()'''
         self.loss_M.backward()
 
-    def backward_G(self):
+    def backward_G(self, retain_graph=False):
         lambda_idt = self.opt.lambda_identity
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
-        lambad_M = self.opt.lambad_M
+        lambad_M = self.opt.lambda_metric
         # Identity loss
         if lambda_idt > 0:
             # G_A should be identity if real_B is fed.
@@ -131,10 +134,7 @@ class SPGANModel(BaseModel):
             self.loss_idt_B = 0
 
         if lambad_M > 0:
-            self.metric_A = self.netMetric(self.real_A)
-            self.metric_fake_B = self.netMetric(self.fake_B)
-            self.metric_B = self.netMetric(self.real_B)
-            self.metric_fake_A = self.netMetric(self.fake_A)
+
 
             self.loss_M = self.criterionMetric(self.metric_A, self.metric_fake_B, True)\
                         + self.criterionMetric(self.metric_B, self.metric_fake_A, True)\
@@ -158,7 +158,7 @@ class SPGANModel(BaseModel):
                     + self.loss_idt_A + self.loss_idt_B \
                     + self.loss_M * lambad_M
                     
-        self.loss_G.backward()
+        self.loss_G.backward(retain_graph=retain_graph)
 
     def optimize_parameters(self):
         # forward
@@ -166,7 +166,7 @@ class SPGANModel(BaseModel):
         # G_A and G_B
         self.set_requires_grad([self.netD_A, self.netD_B, self.netMetric], False)
         self.optimizer_G.zero_grad()
-        self.backward_G()
+        self.backward_G(True)
         self.optimizer_G.step()
         # D_A and D_B
         self.set_requires_grad([self.netD_A, self.netD_B], True)
