@@ -51,10 +51,6 @@ class BaseModel(object):
         with torch.no_grad():
             self.forward()
 
-    def get_image_paths(self):
-        '''get image paths'''
-        return self.image_paths
-
     def optimize_parameters(self):
         pass
 

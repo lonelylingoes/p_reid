@@ -10,31 +10,32 @@ class SingleDataset(BaseDataset):
         super(SingleDataset, self).__init__()
         self.opt = opt
         self.root = opt.dataroot
-        self.dir_A = os.path.join(opt.dataroot, opt.sub_dirA)
+        AtoB = opt.which_direction == 'AtoB'
+        sub_dir = opt.sub_dirA if AtoB else opt.sub_dirB
+        self.dir = os.path.join(opt.dataroot, sub_dir)
 
-        self.A_paths = make_dataset(self.dir_A)
-
-        self.A_paths = sorted(self.A_paths)
-
+        self.paths = make_dataset(self.dir)
+        self.paths = sorted(self.paths)
         self.transform = get_transform(opt)
 
     def __getitem__(self, index):
-        A_path = self.A_paths[index]
-        A_img = Image.open(A_path).convert('RGB')
-        A = self.transform(A_img)
+        path = self.paths[index]
+        img = Image.open(path).convert('RGB')
+        transImg = self.transform(img)
         if self.opt.which_direction == 'BtoA':
             input_nc = self.opt.output_nc
         else:
             input_nc = self.opt.input_nc
 
         if input_nc == 1:  # RGB to gray
-            tmp = A[0, ...] * 0.299 + A[1, ...] * 0.587 + A[2, ...] * 0.114
-            A = tmp.unsqueeze(0)
+            tmp = transImg[0, ...] * 0.299 + transImg[1, ...] * 0.587 + transImg[2, ...] * 0.114
+            transImg = tmp.unsqueeze(0)
 
-        return {'A': A, 'A_paths': A_path}
+        return {'A': transImg, 'A_paths': path} if self.opt.which_direction == 'AtoB' \
+                else  {'B': transImg, 'B_paths': path} 
 
     def __len__(self):
-        return len(self.A_paths)
+        return len(self.paths)
 
     def name(self):
         return 'SingleImageDataset'

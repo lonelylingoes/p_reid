@@ -34,11 +34,11 @@ pip install -r requirements.txt
 If you want to train the model, run this script:
 ```
 cd script
-python train.py --dataroot /data/DataSet/ --sub_dirA /market1501 --sub_dirA /duke --name market_duke_spgan --model spgan --pool_size 50 --no_dropout 
+python train.py --dataroot /data/DataSet/ --sub_dirA market1501 --sub_dirB duke --name market_duke_spgan --model spgan --pool_size 50 --no_dropout 
 ```
 It may be rasied some exceptions about http, this is caused by the visdom.server not running, you can shutdown the show of plot:
 ```
-python train.py --dataroot /data/DataSet/ --sub_dirA /market1501 --sub_dirA /duke --name market_duke_spgan --model spgan --pool_size 50 --no_dropout --display_id 0
+python train.py --dataroot /data/DataSet/ --sub_dirA market1501 --sub_dirB duke --name market_duke_spgan --model spgan --pool_size 50 --no_dropout --display_id 0
 ```
 or start the visdom.server first:
 ```
@@ -51,17 +51,19 @@ To view training results and loss plots, run python -m visdom.server and click t
 
 
 ## Test the model
-If you want to test the model, run this script:
+When the model is trained, use this script to trans A to B:
+
 ```
 cd script
-python test.py --dataroot /data/DataSet/ --sub_dirA /market1501 --sub_dirA /duke --name market_duke_spgan --model spgan --no_dropout
+python test.py --dataroot /data/DataSet/ --sub_dirA market1501 --sub_dirB duke --name market_duke_spgan --model test --dataset_mode single --results_dir ../results/market_to_duke --no_dropout --resize_or_crop None
 ```
-This scrpt will generate two direction transfers: A->B and B->A.
-
-
-## Single direction transfer
-If you just want to transform dataset A to B, use this script:
+And use the script to trans B to A:
 ```
 cd script
-python test.py --dataroot /data/DataSet/ --sub_dirA /market1501 --name market_duke_spgan --model test --dataset_mode single
+python test.py --dataroot /data/DataSet/ --sub_dirA market1501 --sub_dirB duke --name market_duke_spgan --model test --dataset_mode single --results_dir ../results/duke_to_market --no_dropout --resize_or_crop None --which_direction BtoA
 ```
+
+When finish the test, you can watch the trans results through the webpage by open the 'index.html' in the result dir.
+
+
+
