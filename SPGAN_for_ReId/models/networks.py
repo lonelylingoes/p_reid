@@ -175,7 +175,7 @@ class SiameseNet(nn.Module):
         output = self.base(input)
         output = output.view(output.size(0), -1)
         output = self.fully_layer(output)
-        return output
+        return F.normalize(output) 
 
 
 class MetricLoss(nn.Module):
