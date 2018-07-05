@@ -55,7 +55,7 @@ When the model is trained, use this script to trans A to B:
 
 ```
 cd script
-python test.py --dataroot /data/DataSet/ --sub_dirA market1501 --sub_dirB duke --name market_duke_spgan --model test --dataset_mode single --results_dir ../results/market_to_duke --no_dropout --resize_or_crop None
+python test.py --dataroot /data/DataSet/ --sub_dirA market1501 --sub_dirB duke --name market_duke_spgan --model test --dataset_mode single --results_dir ../results/market_to_duke --no_dropout --loadSize (572,286) --fineSize (512,256) --resize_or_crop scale_width
 ```
 And use the script to trans B to A:
 ```
