@@ -48,6 +48,7 @@ class BaseModel(object):
         ''' used in test time, wrapping `forward` in no_grad() so we don't save
         intermediate steps for backprop
         '''
+        self.eval()
         with torch.no_grad():
             self.forward()
 
