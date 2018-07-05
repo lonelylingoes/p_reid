@@ -4,7 +4,7 @@ import itertools
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
-
+import torch.nn.functional as F
 
 class SPGANModel(BaseModel):
     def __init__(self, opt):
@@ -133,13 +133,17 @@ class SPGANModel(BaseModel):
             self.loss_idt_B = 0
 
         if lambad_M > 0:
-
-
+            '''
             self.loss_M = self.criterionMetric(self.metric_A, self.metric_fake_B, True)\
                         + self.criterionMetric(self.metric_B, self.metric_fake_A, True)\
                         + self.criterionMetric(self.metric_A, self.metric_fake_A, False)\
                         + self.criterionMetric(self.metric_B, self.metric_fake_B, False)
             self.loss_M /= 4.0
+            '''
+            self.loss_M = self.criterionMetric(self.metric_A, self.metric_fake_B, True)\
+                        + self.criterionMetric(self.metric_B, self.metric_fake_A, True)\
+                        + 2*self.criterionMetric(self.metric_A, self.metric_B, False)
+            self.loss_M /= 3.0
         else:
             self.loss_M = 0
 
