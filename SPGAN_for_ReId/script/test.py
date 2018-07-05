@@ -22,7 +22,7 @@ def main():
     # load the model's checkpoint; print networks; create shedulars
     model.setup(opt)
     # create website
-    web_dir = os.path.join(opt.results_dir,  'testing, %s' % opt.which_epoch)
+    web_dir = os.path.join(opt.results_dir,  'testing_%s' % opt.which_epoch)
     webpage = html.HTML(web_dir, 'Testing, Experiment = %s,  Epoch = %s' % (opt.name, opt.which_epoch))
     # test
     for i, data in enumerate(data_loader):
