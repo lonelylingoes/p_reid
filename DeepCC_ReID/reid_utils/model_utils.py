@@ -11,6 +11,7 @@ sys.path.append('../')
 import sys
 import os
 import os.path as osp
+import cPickle as pickle
 import gc
 import numpy as np
 from scipy import io
@@ -77,7 +78,8 @@ def save_ckpt(model, optimizer, epoch, ckpt_file):
         loading ckpt, you have to inform torch.load() to load these tensors to 
         cpu or your desired gpu, if you change devices.
     """
-    ckpt = dict(state_dicts=model.state_dict(),
+    # add .module, otherwise the name will add 'module'
+    ckpt = dict(state_dicts=model.module.state_dict(),
                 optimizer = optimizer.state_dict(),
                 epoch=epoch)
     common_utils.may_make_dir(osp.dirname(osp.abspath(ckpt_file)))
@@ -112,7 +114,7 @@ def adjust_lr_exp(optimizer, base_lr, epoch, total_epoch, start_decay_at_epoch):
         return
 
     for g in optimizer.param_groups:
-        g['lr'] = (base_lr * (0.001 ** (float(epoch + 1 - start_decay_at_epoch)
+        g['lr'] = (base_lr * (float(1/3.0) * 0.001 ** (float(epoch + 1 - start_decay_at_epoch)
                                         / (total_epoch + 1 - start_decay_at_epoch))))
     print('=====> lr adjusted to {:.10f}'.format(g['lr']).rstrip('0'))
 
@@ -217,8 +219,6 @@ def load_test_model(model, cfg):
     # del the unused layer when test
     dest_state_dict = model.state_dict()
     for name, param in src_state_dict.items():
-        if 0 == name.find('module.'):# fix the 'bug' of strip()
-            name = name[len('module.'):]
         if name not in dest_state_dict:
             continue
         if isinstance(param, torch.nn.Parameter):
@@ -226,7 +226,7 @@ def load_test_model(model, cfg):
             param = param.data
         try:
             dest_state_dict[name].copy_(param)
-        except (Exception, msg):
+        except Exception, msg:
             print("Warning: Error occurs when copying '{}': {}".format(name, str(msg)))
 
     return model

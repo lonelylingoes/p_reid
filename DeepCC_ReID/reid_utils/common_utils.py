@@ -11,7 +11,7 @@ sys.path.append('../')
 import sys
 import os
 import os.path as osp
-import pickle
+import cPickle as pickle
 import gc
 import numpy as np
 from scipy import io
