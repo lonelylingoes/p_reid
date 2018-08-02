@@ -68,11 +68,9 @@ class ReId(object):
         # load model param
         self.model = model_utils.load_test_model(self.model, cfg)
         self.model.eval()
-        # after load model, parallel the model
-        if torch.cuda.device_count() > 1:
-            self.model = nn.DataParallel(self.model, device_ids=[device_id])
-        if torch.cuda.is_available():
-            self.model.cuda()
+        # after load model
+        if torch.cuda.is_available() and device_id >= 0:
+            self.model = self.model.cuda(device = device_id)
     
     def __parse_image_name__(self, image_name):
         '''
@@ -106,10 +104,11 @@ class ReId(object):
         return global_feats
 
 
-    def association_judge(self, 
+    @staticmethod
+    def association_judge(
                         unconfirmed_persons,
                         confirmed_persons,
-                        loss_frame_number,
+                        threshold,
                         identy_confirm_strategy = 'min',
                         to_re_rank=False):
         '''
@@ -118,7 +117,7 @@ class ReId(object):
         args:
             unconfirmed_persons: confirmed persons list
             confirmed_persons: unconfirmed persons list
-            loss_frame_number: the number of frames loss tracking indicate person lost
+            threshold: identy threshold decides whether same or not
             identy_confirm_strategy: value in 'average', 'max', 'min', for identiy
             to_re_rank: whether use re_rank
         returns: list of person number, if not found the value is -1.
@@ -132,11 +131,9 @@ class ReId(object):
             confirmed_index = [person.status for person in confirmed_persons].index(Status.confirmed)
         except:
             confirmed_index = -1
-        compact_q_g_dist = self.get_associate_dis(unconfirmed_persons,confirmed_persons,loss_frame_number,
+        compact_q_g_dist = ReId.get_associate_dis(unconfirmed_persons,confirmed_persons,
                                             identy_confirm_strategy, to_re_rank)
         
-        # the threshold decides whether same
-        threshold = self.identy_threshold
         # associate confirmed person first 
         if confirmed_persons != -1:
             m, n = compact_q_g_dist.shape
@@ -147,7 +144,7 @@ class ReId(object):
         indices = linear_assignment(compact_q_g_dist)
         for row, col in indices:
             if compact_q_g_dist[row, col] < threshold:
-                found_ids[row] = confirmed_persons[col].get_person_number()
+                found_ids[row] = confirmed_persons[col].person_number
         
         
         '''
@@ -160,17 +157,17 @@ class ReId(object):
         for i in range(m):
             # for query i, in the gallery set, the shortest distance is less than the threshold
             if sorted_dis[i][0] < threshold:
-                found_ids[i]=confirmed_persons[indexs[i]].get_person_number()
+                found_ids[i]=confirmed_persons[indexs[i]].person_number
         found_ids = self.__remvoe_overlap__(sorted_dis[:,0], found_ids)
         '''
 
         return found_ids
 
-    
-    def get_associate_dis(self, 
-                        unconfirmed_persons,
+
+
+    @staticmethod
+    def get_associate_dis(unconfirmed_persons,
                         confirmed_persons,
-                        loss_frame_number,
                         identy_confirm_strategy = 'min',
                         to_re_rank=False):
         '''
@@ -179,7 +176,6 @@ class ReId(object):
         args:
             unconfirmed_persons: confirmed persons list
             confirmed_persons: unconfirmed persons list
-            loss_frame_number: the number of frames loss tracking indicate person lost
             identy_confirm_strategy: value in 'average', 'max', 'min', for identiy
             to_re_rank: whether use re_rank
         returns: distance matrix
@@ -192,7 +188,7 @@ class ReId(object):
         person_numbers = []
         confirmed_strategy = []
         for person in confirmed_persons:
-            person_numbers.append(person.get_person_number())
+            person_numbers.append(person.person_number)
             cache_len = person.get_identy_cache_len() + person.get_tracking_cache_len()
             index += cache_len
             index_list.append(index)
@@ -201,17 +197,19 @@ class ReId(object):
             cache_info.extend(person.get_identy_info())
             confirmed_strategy.append(identy_confirm_strategy)
             for i in range(cache_len):
-                g_feats.append(cache_info[i].feature)
+                g_feats.append(cache_info[i].body_feature)
         g_feats = np.array(g_feats)
 
         # compute distance
         q_g_dist = loss.compute_dist_np(q_feats, g_feats, type='euclidean')
-        compact_q_g_dist = self.__compact_dist(q_g_dist, index_list, confirmed_strategy)
+        compact_q_g_dist = ReId.compact_dist(q_g_dist, index_list, confirmed_strategy)
         
         return compact_q_g_dist
 
 
-    def __compact_dist(self, g_q_dist, index_list, compact_strategy):
+
+    @staticmethod
+    def compact_dist(g_q_dist, index_list, compact_strategy):
         '''
         compact the distance matrix by the pointed strategy.
         the identy distance has higher priority, 
