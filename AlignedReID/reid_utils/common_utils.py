@@ -11,8 +11,10 @@ sys.path.append('../')
 import sys
 import os
 import os.path as osp
-import pickle
-import gc
+if sys.version_info.major == 2:
+    import pickle
+else:
+    import cPickle as pickle
 import numpy as np
 from scipy import io
 import datetime
