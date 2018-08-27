@@ -62,7 +62,7 @@ class ReId(object):
         cfg.ckpt_file = model_path
         self.device_id = device_id
         self.identy_threshold = identy_threshold
-        torch.cuda.set_device(device_id)
+        common_utils.set_device(device_id)
         # create model
         self.model = Model(local_conv_out_channels=128, pretrained = False)
         # load model param
@@ -70,7 +70,7 @@ class ReId(object):
         self.model.eval()
         # after load model
         if torch.cuda.is_available() and device_id >= 0:
-            self.model = self.model.cuda(device = device_id)
+            self.model = self.model.cuda()
     
     def __parse_image_name__(self, image_name):
         '''
