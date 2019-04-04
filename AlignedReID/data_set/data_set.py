@@ -25,6 +25,33 @@ from collections import defaultdict
 from PIL import Image
 
 
+
+def get_parse_name_function(data_type, data_set_name):
+    '''
+    get the full path img name parse function.
+    args:
+        data_type: a string indicate in ['train', 'trainval', 'test', 'val'].
+        data_set_name: data set name
+    return:
+        a full path img name parse function.
+    '''
+    if data_type == 'test' and data_set_name == 'combine':
+        # combnie data has no test set.
+        raise NotImplementedError 
+
+    if  data_set_name == 'market1501':
+        return parse_full_path_market1501_im_name
+    elif data_set_name == 'duke':
+        return parse_full_path_duke_im_name
+    elif data_set_name == 'cuhk03':
+        return  parse_full_path_new_im_name
+    elif data_set_name == 'msmt17':
+        return parse_full_path_msmt17_im_name
+    elif data_set_name == 'combine':
+        return  parse_full_path_new_im_name
+
+
+
 class ReIdDataSet(Dataset):
     '''
     ReIdDataSet class 
@@ -43,16 +70,7 @@ class ReIdDataSet(Dataset):
 
         if data_type == 'trainval':
             partition = load_pickle(ospeu(cfg.train_dataset_partitions))
-            if  cfg.train_dataset == 'market1501':
-                self.parse_full_path_im_name = parse_full_path_market1501_im_name
-            elif cfg.train_dataset == 'duke':
-                self.parse_full_path_im_name = parse_full_path_duke_im_name
-            elif cfg.train_dataset == 'cuhk03':
-                self.parse_full_path_im_name =  parse_full_path_new_im_name
-            elif cfg.train_dataset == 'msmt17':
-                self.parse_full_path_im_name = parse_full_path_msmt17_im_name
-            elif cfg.train_dataset == 'combine':
-                self.parse_full_path_im_name =  parse_full_path_new_im_name
+            self.parse_full_path_im_name = get_parse_name_function(data_type, cfg.train_dataset) 
 
             self.ims_per_id = cfg.ims_per_id
             self.ims_names = partition['trainval_im_names']
@@ -64,18 +82,10 @@ class ReIdDataSet(Dataset):
                 self.ids_to_im_indexs[id].append(index)
             # id list
             self.ids = self.ids_to_im_indexs.keys()
+
         elif data_type == 'train':
             partition = load_pickle(ospeu(cfg.train_dataset_partitions))
-            if  cfg.train_dataset == 'market1501':
-                self.parse_full_path_im_name = parse_full_path_market1501_im_name
-            elif cfg.train_dataset == 'duke':
-                self.parse_full_path_im_name = parse_full_path_duke_im_name
-            elif cfg.train_dataset == 'cuhk03':
-                self.parse_full_path_im_name =  parse_full_path_new_im_name
-            elif cfg.train_dataset == 'msmt17':
-                self.parse_full_path_im_name = parse_full_path_msmt17_im_name
-            elif cfg.train_dataset == 'combine':
-                self.parse_full_path_im_name =  parse_full_path_new_im_name
+            self.parse_full_path_im_name = get_parse_name_function(data_type, cfg.train_dataset)
 
             self.ims_per_id = cfg.ims_per_id
             self.ims_names = partition['train_im_names']
@@ -87,36 +97,21 @@ class ReIdDataSet(Dataset):
                 self.ids_to_im_indexs[id].append(index)
             # id list
             self.ids = self.ids_to_im_indexs.keys()
+
         elif data_type == 'val':
             partition = load_pickle(ospeu(cfg.test_dataset_partitions))
-            if  cfg.train_dataset == 'market1501':
-                self.parse_full_path_im_name = parse_full_path_market1501_im_name
-            elif cfg.train_dataset == 'duke':
-                self.parse_full_path_im_name = parse_full_path_duke_im_name
-            elif cfg.train_dataset == 'cuhk03':
-                self.parse_full_path_im_name =  parse_full_path_new_im_name
-            elif cfg.train_dataset == 'msmt17':
-                self.parse_full_path_im_name = parse_full_path_msmt17_im_name
-            elif cfg.train_dataset == 'combine':
-                self.parse_full_path_im_name =  parse_full_path_new_im_name
+            self.parse_full_path_im_name = get_parse_name_function(data_type, cfg.train_dataset)
 
             self.ims_names = partition['val_im_names']
             self.marks = partition['val_marks']
+
         elif data_type == 'test':
             partition = load_pickle(ospeu(cfg.test_dataset_partitions))
-            if  cfg.test_dataset == 'market1501':
-                self.parse_full_path_im_name = parse_full_path_market1501_im_name
-            elif cfg.test_dataset == 'duke':
-                self.parse_full_path_im_name = parse_full_path_duke_im_name
-            elif cfg.test_dataset == 'cuhk03':
-                self.parse_full_path_im_name =  parse_full_path_new_im_name
-            elif cfg.test_dataset == 'msmt17':
-                self.parse_full_path_im_name = parse_full_path_msmt17_im_name
-            else:
-                pass
+            self.parse_full_path_im_name = get_parse_name_function(data_type, cfg.test_dataset)
 
             self.ims_names = partition['test_im_names']
             self.marks = partition['test_marks']
+
         else:
             pass
 
