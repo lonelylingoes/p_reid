@@ -3,3 +3,4 @@ Some datasets can be downloaded from [here](http://robustsystems.coe.neu.edu/sit
 
 1. [AlignedReID](https://github.com/lonelylingoes/p_reid/tree/master/AlignedReID)
 2. [SPGAN_for_ReId](https://github.com/lonelylingoes/p_reid/tree/master/SPGAN_for_ReId)
+3. [MGN-pytorch](https://github.com/lonelylingoes/p_reid/tree/master/MGN-pytorch)
