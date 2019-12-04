@@ -104,7 +104,7 @@ def compute_dist_np(array1, array2, type='euclidean'):
     if type == 'cosine':
         array1 = normalize_np(array1, axis=1)
         array2 = normalize_np(array2, axis=1)
-        dist = np.matmul(array1, array2.T)
+        dist = 1 - np.matmul(array1, array2.T)
         return dist
     else:
         # shape [m1, 1]
